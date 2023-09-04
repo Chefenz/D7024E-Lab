@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/bash
 
 #Build the docker image and give it the correct name
 sudo docker build . -t kadlab
