@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export COMPOSE_HTTP_TIMEOUT=200
+
 #Build the docker image and give it the correct name
 sudo docker build . -t kadlab
 
