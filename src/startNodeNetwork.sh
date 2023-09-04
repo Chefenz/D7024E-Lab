@@ -1,14 +1,17 @@
 #!bin/bash
 
 #Build the docker image and give it the correct name
-docker build . -t kadlab
+sudo docker build . -t kadlab
+
+echo "wait 30 seconds for the image to build"
+sudo wait 30
 
 #Start the docker containers
-docker-compose up -d
+sudo docker-compose up -d
 
 #Wait for the containers to start up
-echo "wait ten seconds for the containers to start up"
-wait 10
+echo "wait 5 seconds for the containers to start up"
+sudo wait 5
 
 #Check which containers are running
-docker-compose ps
+sudo docker-compose ps
