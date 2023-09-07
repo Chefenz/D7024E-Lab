@@ -1,4 +1,8 @@
-package d7024e
+package labCode
+
+import (
+	"log"
+)
 
 type Network struct {
 }
@@ -8,7 +12,7 @@ func Listen(ip string, port int) {
 }
 
 func (network *Network) SendPingMessage(contact *Contact) {
-	// TODO
+	log.Println("Hello world")
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
