@@ -4,21 +4,6 @@ echo ""
 echo "Starting up kademlia network and nodes"
 echo ""
 
-#Traverse to the go main file
-cd ../cmd/KademliaDDS/
-
-#Build the go program 
-echo "building the go program..."
-go build main.go
-echo "Done!"
-echo ""
-
-#Move the executable to the correct directory
-mv main.exe ../../bin
-
-#Set up for containers 
-cd ../../
-
 #Remove any running containers
 echo "Remove any running containers"
 sudo docker-compose down
