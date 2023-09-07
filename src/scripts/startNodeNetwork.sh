@@ -14,7 +14,7 @@ echo "Done!"
 echo ""
 
 #Move the executable to the correct directory
-mv ./main.exe ../../bin
+mv main.exe ../../bin
 
 #Set up for containers 
 cd ../../
