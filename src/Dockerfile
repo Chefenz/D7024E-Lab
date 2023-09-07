@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-COPY main /bin/
+COPY main.exe /bin/
 
 CMD ["./main.exe"]
 
