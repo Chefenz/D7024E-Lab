@@ -11,6 +11,7 @@ echo ""
 
 #Build the docker image and give it the correct name
 echo "Build the docker file"
+cd ..
 sudo docker build . -t kadlab
 echo ""
 
