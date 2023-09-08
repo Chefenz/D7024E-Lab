@@ -1,10 +1,10 @@
 FROM alpine:latest
 
-WORKDIR /usr
+WORKDIR /usr/app/src
 
 COPY /bin/main.exe ./
 
-CMD ["./main.exe"]
+#CMD ["sudo", "./main.exe"]
 
 
 
