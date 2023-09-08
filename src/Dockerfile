@@ -1,7 +1,6 @@
 FROM alpine:latest
 
-
-WORKDIR /usr/app/src
+WORKDIR /usr
 
 COPY /bin/main.exe ./
 
