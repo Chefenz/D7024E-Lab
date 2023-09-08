@@ -1,6 +1,9 @@
 FROM alpine:latest
 
-COPY /bin/main.exe /
+
+WORKDIR /usr/app/src
+
+COPY /bin/main.exe ./
 
 CMD ["./main.exe"]
 
