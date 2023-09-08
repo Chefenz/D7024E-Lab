@@ -4,9 +4,9 @@ WORKDIR /usr/app/src
 
 COPY /bin/main.exe ./
 
-RUN chmod +x main.exe
+#RUN chmod +x main.exe
 
-CMD ["./main.exe"]
+#CMD ["./main.exe"]
 
 
 
