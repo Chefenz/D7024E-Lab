@@ -2,7 +2,7 @@ FROM alpine:latest
 
 WORKDIR /usr/app/src
 
-COPY /bin/main.exe ./
+COPY /bin/main ./
 
 #RUN chmod +x main.exe
 
