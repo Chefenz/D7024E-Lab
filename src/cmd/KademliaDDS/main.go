@@ -7,14 +7,16 @@ import (
 )
 
 func main() {
-	connType := os.Getenv("TYPE")
+	connType := os.Args[1]
+
+	fmt.Println("Running node as:", connType)
 
 	if connType == "master" {
-		startOtherTypeNode()
-	} else if connType == "other" {
 		startMasterTypeNode()
+	} else if connType == "other" {
+		startOtherTypeNode()
 	} else {
-		fmt.Printf("please provide the TYPE arg (TYPE=master or TYPE=other)")
+		fmt.Printf("please provide the arg (master or other)")
 	}
 }
 

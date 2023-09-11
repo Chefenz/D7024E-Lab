@@ -54,8 +54,8 @@ func Listen(ip string, port int) {
 }
 
 func (network *Network) SendPingMessage(contact *Contact) {
-	// Establish connection over tcp on port 2000
-	conn, err := net.Dial("tcp", ":2000")
+	// Establish connection over tcp on port 8000
+	conn, err := net.Dial("tcp", ":8000")
 
 	if err != nil {
 		// Handle the error, log it, or return an error message
