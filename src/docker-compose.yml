@@ -7,6 +7,26 @@
 
 version: "3"
 services:
+  masterNode:
+  image: kadlab:latest # Make sure your Docker image has this name.
+  stdin_open: true
+  tty: true
+  deploy:
+    mode: replicated
+    replicas: 1  
+#        resources:
+#           limits:
+#              cpus: "0.1"
+#              memory: 50M
+    restart_policy:
+      condition: on-failure
+      delay: 5s
+      max_attempts: 3
+      window: 10s
+  ports:
+    - "8000:8050"
+  networks:
+    - kademlia_network
   kademliaNodes:
     image: kadlab:latest # Make sure your Docker image has this name.
     stdin_open: true
@@ -24,7 +44,7 @@ services:
         max_attempts: 3
         window: 10s
     ports:
-      - "8000-8049:8050"
+      - "8001-8049:8050"
     networks:
       - kademlia_network
       
