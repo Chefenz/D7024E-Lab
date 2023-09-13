@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 func main() {
-	fmt.Println("Hello, World!")
+	// Get the container name from the environment variable.
+	containerName := os.Getenv("CONTAINER_NAME")
+
+	// Print the container name.
+	fmt.Println(containerName)
 }
