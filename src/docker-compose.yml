@@ -45,6 +45,8 @@ services:
         window: 10s
     ports:
       - "8001-8049:8050"
+    depends_on:
+      - masterNode
     networks:
       - kademlia_network
       
