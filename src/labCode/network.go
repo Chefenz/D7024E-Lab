@@ -45,6 +45,7 @@ func Listen(ip string, port int) {
 				buf = append(buf, tmp[:n]...)
 
 			}
+			fmt.Println("")
 			fmt.Println("total size:", len(buf))
 			io.Copy(c, c)
 			// Shut down the connection.
