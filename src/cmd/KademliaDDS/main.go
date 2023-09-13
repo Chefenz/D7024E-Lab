@@ -1,11 +1,7 @@
 package main
 
-import (
-	"fmt"
-	"os"
-)
+import "fmt"
 
 func main() {
-	containerName := os.Args[1]
-	fmt.Println("The name of the container is:", containerName)
+	fmt.Println("Hello, World!")
 }

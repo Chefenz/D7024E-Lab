@@ -2,13 +2,11 @@ FROM alpine:latest
 
 WORKDIR /usr/app/src
 
-ARG container_name
-
 COPY /bin/main ./
 
 RUN chmod +x main
 
-CMD ["./main", ARG]
+CMD ["./main"]
 
 
 
