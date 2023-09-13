@@ -7,7 +7,7 @@ import (
 
 func main() {
 	// Get the container name from the environment variable.
-	containerName := os.Getenv("CONTAINER_NAME")
+	containerName := os.Getenv("NAMES")
 
 	// Print the container name.
 	fmt.Println(containerName)
