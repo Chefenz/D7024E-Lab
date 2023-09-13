@@ -9,6 +9,7 @@ version: "3"
 services:
   masterNode:
     image: kadlab:latest # Make sure your Docker image has this name.
+    container_name: master
     stdin_open: true
     tty: true
     deploy:
@@ -29,6 +30,7 @@ services:
       - kademlia_network
   kademliaNodes:
     image: kadlab:latest # Make sure your Docker image has this name.
+    container_name: other
     stdin_open: true
     tty: true
     deploy:
