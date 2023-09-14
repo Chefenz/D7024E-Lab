@@ -13,7 +13,7 @@ type Kademlia struct {
 }
 
 func (kademlia *Kademlia) startListen() {
-	kademlia.network.Listen(kademlia.routingTable.me.Address)
+	kademlia.network.Listen(kademlia.routingTable.me.Address, 8050)
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {

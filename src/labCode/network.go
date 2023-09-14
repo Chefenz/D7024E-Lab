@@ -17,7 +17,7 @@ func NewNetwork() Network {
 	return Network{}
 }
 
-func Listen(ip string, port int) {
+func (network *Network) Listen(ip string, port int) {
 	// Listen on TCP port 2000 on all available unicast and
 	// anycast IP addresses of the local system.
 	portString := strconv.Itoa(port)
