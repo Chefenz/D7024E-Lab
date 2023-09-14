@@ -26,7 +26,7 @@ func main() {
 	}
 
 	//Start the command line user face
-	labCode.StartCLI()
+	labCode.RunCLI()
 }
 
 func startOtherTypeNode() {
@@ -36,5 +36,5 @@ func startOtherTypeNode() {
 }
 
 func startMasterTypeNode() {
-	labCode.Listen("", 8001)
+	labCode.Listen("", 8000)
 }
