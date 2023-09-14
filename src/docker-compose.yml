@@ -1,25 +1,15 @@
-# See https://docs.docker.com/compose/compose-file/ for information about what
-# commands you can use in this file.
-#
-# Note that you must use the `docker stack deploy` command, with any required
-# command line flags, in order to actually get any replicas started. That
-# command requires that a docker swarm is already running in order to function.
-
 version: "3"
 services:
   masterNode:
     image: kadlab:latest # Make sure your Docker image has this name.
+    container_name: master
     environment:
-      - CONTAINER_NAME=master
+      - CONTAINER_NAME=master #Used by the go program to distinguish between master and other nodes
     stdin_open: true
     tty: true
     deploy:
       mode: replicated
       replicas: 1  
-#        resources:
-#           limits:
-#              cpus: "0.1"
-#              memory: 50M
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -37,11 +27,7 @@ services:
     tty: true
     deploy:
       mode: replicated
-      replicas: 5  
-#        resources:
-#           limits:
-#              cpus: "0.1"
-#              memory: 50M
+      replicas: 49  
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -56,4 +42,3 @@ services:
       
 networks:
   kademlia_network:
-

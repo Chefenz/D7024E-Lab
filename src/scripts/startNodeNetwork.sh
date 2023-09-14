@@ -1,5 +1,20 @@
 #!/bin/bash
 
+#Traverse to the go main file
+cd ./src/cmd/KademliaDDS/
+
+#Build the go program 
+echo "building the go program..."
+env GOOS=linux GOARCH=amd64 go build main.go
+echo "Done!"
+echo ""
+
+#Move the executable to the correct directory
+mv main ../../bin
+
+#Traverse back to the docker files
+cd ./src
+
 echo ""
 echo "Starting up kademlia network and nodes"
 echo ""
@@ -11,7 +26,6 @@ echo ""
 
 #Build the docker image and give it the correct name
 echo "Build the docker file"
-cd ..
 sudo docker build . -t kadlab
 echo ""
 
