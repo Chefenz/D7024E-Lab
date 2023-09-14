@@ -10,6 +10,7 @@ import (
 )
 
 type Network struct {
+	masterID KademliaID
 }
 
 func Listen(ip string, port int) {
