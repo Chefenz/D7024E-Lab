@@ -2,6 +2,7 @@ package labCode
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -41,53 +42,70 @@ func RunCLI() {
 			continue
 		}
 
-		command, args := parseInput(userInput)
+		command, args, err := parseInput(userInput)
+		if err != nil {
+			fmt.Println("Unexpected Error: ", err)
+			os.Exit(1)
+		}
 
-		var response string
 		switch command {
 		case "put":
-			response = handlePutCommand(args)
+			response, err := handlePutCommand(args)
+			if err != nil {
+				printToTerminal(err.Error())
+				break
+			}
+			printToTerminal(response)
 		case "get":
-			response = handleGetCommand(args)
+			response, err := handleGetCommand(args)
+			if err != nil {
+				printToTerminal(err.Error())
+				break
+			}
+			printToTerminal(response)
 		case "exit":
 			printToTerminal(ShuttingDownNodeMsg)
 			os.Exit(0)
 		case "help":
-			response = handleHelpCommand(args)
+			response := handleHelpCommand(args)
+			printToTerminal(response)
 		default:
-			response = UnknownCommandMsg + "<" + command + "> " + UseHelpToViewCommandsMsg
+			printToTerminal(UnknownCommandMsg + "<" + command + "> " + UseHelpToViewCommandsMsg)
 		}
-
-		printToTerminal(response)
 
 	}
 
 }
 
-func parseInput(userInput string) (string, []string) {
+func parseInput(userInput string) (string, []string, error) {
+	if userInput == "" {
+		return "", nil, errors.New("empty string")
+	}
 	args := strings.Split(userInput, " ")
 	command := strings.Trim(strings.ToLower(args[0]), "\n")
 
-	return command, args[1:]
+	return command, args[1:], nil
 }
 
-func handlePutCommand(args []string) string {
+func handlePutCommand(args []string) (string, error) {
 	if len(args) == 0 {
-		return InvalidArgsForPutCommandMsg + PutCommandUsageMsg
+		return "", errors.New(InvalidArgsForPutCommandMsg + PutCommandUsageMsg)
+
 	}
 
 	//TODO - HANDLE THE ACTUAL STORING OF THE DATA
-	return "TEMPSTR"
+	return "TEMPSTR", nil
 
 }
 
-func handleGetCommand(args []string) string {
+func handleGetCommand(args []string) (string, error) {
 	if len(args) == 0 || len(args) > 1 {
-		return InvalidArgsForGetCommandMsg + GetCommandUsageMsg
+		return "", errors.New(InvalidArgsForGetCommandMsg + GetCommandUsageMsg)
+
 	}
 
 	//TODO - HANDLE THE ACTUAL GET COMMAND AND VERIFY THAT THE OTHER ARGUMENT IS A 160-BIT SHA1-HASH
-	return "TEMPSTR"
+	return "TEMPSTR", nil
 }
 
 func handleHelpCommand(args []string) string {
