@@ -1,6 +1,7 @@
 package labCode
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -10,7 +11,10 @@ import (
 )
 
 type Network struct {
-	masterID KademliaID
+}
+
+func NewNetwork() Network {
+	return Network{}
 }
 
 func Listen(ip string, port int) {
@@ -19,7 +23,7 @@ func Listen(ip string, port int) {
 	portString := strconv.Itoa(port)
 	targetAddr := ip + ":" + portString
 
-	l, err := net.Listen("tcp", targetAddr)
+	l, err := net.Listen("udp", targetAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,6 +44,7 @@ func Listen(ip string, port int) {
 			buf := make([]byte, 0, 4096) // big buffer
 			tmp := make([]byte, 256)     // using small tmo buffer for demonstrating
 			for {
+
 				n, err := conn.Read(tmp)
 				if err != nil {
 					if err != io.EOF {
@@ -51,6 +56,22 @@ func Listen(ip string, port int) {
 				buf = append(buf, tmp[:n]...)
 
 				fmt.Println("Recieved message: ", string(buf))
+
+				var message listenMessage
+				err = json.Unmarshal(buf, message)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				switch message.Message {
+
+				case "FIND_CONTACT":
+					//contact := message.Data
+					//handleFindContactMessage(contact)
+					labCode.NewContact(labCode.NewRandomKademliaID(), "test")
+					labCode.FindClosestContacts(message.Data, 3)
+
+				}
 				fmt.Println("Returning message: ", "PONG")
 				c.Write([]byte("PONG"))
 				fmt.Println("Message sent")
@@ -114,8 +135,60 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	conn.Close()
 }
 
+type listenMessage struct {
+	Message string
+	Data    interface{}
+}
+
 func (network *Network) SendFindContactMessage(contact *Contact) {
-	// TODO
+	// Establish connection over tcp on port 8000
+
+	targetAddr := contact.Address + ":8000"
+	conn, err := net.Dial("udp", targetAddr)
+
+	if err != nil {
+		// Handle the error, log it, or return an error message
+		fmt.Printf("Failed to connect: %v", err)
+		return
+	}
+	fmt.Println("Connected to: ", targetAddr)
+
+	data := listenMessage{"FIND_CONTACT", contact}
+	transformedData, err := json.Marshal(data)
+	_, writeErr := conn.Write(transformedData)
+
+	if writeErr != nil {
+		// Handle the write error
+		fmt.Printf("Failed to write data: %v", writeErr)
+	}
+	fmt.Println("Sent message ", string(transformedData))
+
+	// Buffer to store incoming data
+	buffer := make([]byte, 1024)
+
+	fmt.Println("Waiting for response...")
+
+	// Wait for a response
+	n, err := conn.Read(buffer)
+	if err != nil {
+		fmt.Println("Error receiving response:", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Response recieved")
+
+	// Received data from the target node, convert to string
+	response := string(buffer[:n])
+
+	// Check if the response is "PONG"
+	if response == "PONG" {
+		fmt.Println("Received PONG response from", targetAddr)
+	} else {
+		fmt.Println("Received an unexpected response:", response)
+	}
+
+	// Close the connection when done
+	conn.Close()
 }
 
 func (network *Network) SendFindDataMessage(hash string) {

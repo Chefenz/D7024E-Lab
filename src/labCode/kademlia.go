@@ -12,11 +12,15 @@ type Kademlia struct {
 	//data         ToBeDetermined
 }
 
-func (kademlia *Kademlia) LookupContact(target *Contact) {
-	count := 3
-	shortList := kademlia.routingTable.FindClosestContacts(target.ID, count)
+func (kademlia *Kademlia) startListen() {
+	kademlia.network.Listen(kademlia.routingTable.me.Address)
+}
 
-	for i := 0; i <= count-1; i++ {
+func (kademlia *Kademlia) LookupContact(target *Contact) {
+	alpha := 3
+	shortList := kademlia.routingTable.FindClosestContacts(target.ID, alpha)
+
+	for i := 0; i < len(shortList); i++ {
 		kademlia.network.SendFindContactMessage(&shortList[i])
 		//kademlia.routingTable.AddContact(shortList[0]) lägg till contact från svar av SendFindContactMessage
 	}
@@ -48,6 +52,7 @@ func InitKademliaNode() Kademlia {
 	id := NewRandomKademliaID()
 	ip := ""
 	rt := NewRoutingTable(NewContact(id, ip))
+	network := NewNetwork()
 	Listen(rt.me.Address, 8050)
-	return Kademlia{*rt, nil}
+	return Kademlia{*rt, network}
 }
