@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kademlia-app/labCode"
 	"os"
+	"time"
 )
 
 func main() {
@@ -21,11 +22,53 @@ func main() {
 }
 
 func startOtherTypeNode() {
-	n := labCode.Network{}
-	c := labCode.NewContact(labCode.NewRandomKademliaID(), "")
-	n.SendPingMessage(&c)
+	rt := labCode.NewRoutingTable(labCode.NewContact(labCode.NewRandomKademliaID(), ":8001"))
+	/* for i := 1; i <= 2; i++ {
+		address := fmt.Sprintf(":80%02d", i)
+		fmt.Printf(address)
+		c := labCode.NewContact(labCode.NewRandomKademliaID(), address)
+		rt.AddContact(c)
+	} */
+
+	c := labCode.NewContact(labCode.NewRandomKademliaID(), ":8000")
+	rt.AddContact(c)
+
+	node := labCode.InitKademliaNode(rt)
+	go node.Listen("", 8001)
+	heartbeatSignal(&node)
+	for {
+
+	}
 }
 
 func startMasterTypeNode() {
-	labCode.Listen("", 8000)
+	rt := labCode.NewRoutingTable(labCode.NewContact(labCode.NewRandomKademliaID(), ":8000"))
+	node := labCode.InitKademliaNode(rt)
+	go node.Listen("", 8000)
+	for {
+
+	}
+}
+
+func heartbeatSignal(node *labCode.Kademlia) {
+	heartbeat := make(chan bool)
+
+	// Start a goroutine to send heartbeat signals at a regular interval.
+	go func() {
+		for {
+			time.Sleep(time.Second * 15)
+			heartbeat <- true
+		}
+	}()
+
+	// Listen for heartbeat signals.
+	for {
+		select {
+		case <-heartbeat:
+			fmt.Println("Heartbeat")
+			node.SendHeartbeatMessage()
+		default:
+			// No heartbeat received.
+		}
+	}
 }
