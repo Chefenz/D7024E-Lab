@@ -23,19 +23,13 @@ func main() {
 
 func startOtherTypeNode() {
 	rt := labCode.NewRoutingTable(labCode.NewContact(labCode.NewRandomKademliaID(), ":8001"))
-	/* for i := 1; i <= 2; i++ {
-		address := fmt.Sprintf(":80%02d", i)
-		fmt.Printf(address)
-		c := labCode.NewContact(labCode.NewRandomKademliaID(), address)
-		rt.AddContact(c)
-	} */
-
 	c := labCode.NewContact(labCode.NewRandomKademliaID(), ":8000")
 	rt.AddContact(c)
-
 	node := labCode.InitKademliaNode(rt)
 	go node.Listen("", 8001)
 	heartbeatSignal(&node)
+	time.Sleep(time.Second)
+	//node.Ping(&c)
 	for {
 
 	}
@@ -56,7 +50,7 @@ func heartbeatSignal(node *labCode.Kademlia) {
 	// Start a goroutine to send heartbeat signals at a regular interval.
 	go func() {
 		for {
-			time.Sleep(time.Second * 15)
+			time.Sleep(time.Second * 5)
 			heartbeat <- true
 		}
 	}()
