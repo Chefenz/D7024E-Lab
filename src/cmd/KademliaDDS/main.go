@@ -21,13 +21,22 @@ func main() {
 
 	fmt.Println("Running node as:", connType)
 
+	//newKademliaID := labCode.NewRandomKademliaID()
+	//me := labCode.NewContact(newKademliaID, "localhost") //Localhost for now
+	//routingTable := labCode.NewRoutingTable(me)
+	//fmt.Println(routingTable)
+
 	if connType == "master" {
-		startMasterTypeNode()
+		go startMasterTypeNode()
 	} else if connType == "other" {
-		startOtherTypeNode()
+		go startOtherTypeNode()
+		println("test")
 	} else {
 		fmt.Printf("please provide the arg (master or other)")
 	}
+
+	//Start the command line user face
+	//labCode.RunCLI()
 }
 
 func startOtherTypeNode() {
