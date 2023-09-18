@@ -11,7 +11,7 @@ import (
 type Kademlia struct {
 	routingTable *RoutingTable
 	network      Network
-	//data         ToBeDetermined
+	data         map[KademliaID][]byte
 }
 
 type TransmitObj struct {
@@ -19,18 +19,29 @@ type TransmitObj struct {
 	Contact Contact
 }
 
-func NewKademliaNode() Kademlia {
+// Create new nodes
+func NewKademliaNode(address string) Kademlia {
 	id := NewRandomKademliaID()
-	ip := ""
-	routingTable := NewRoutingTable(NewContact(id, ip))
+	routingTable := NewRoutingTable(NewContact(id, address))
 	network := NewNetwork()
-	return Kademlia{routingTable, network}
+	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
+}
+
+func NewMasterKademliaNode() Kademlia {
+	id := NewKademliaID("masterNodeID")
+	routingTable := NewRoutingTable(NewContact(id, "master"))
+	network := NewNetwork()
+	return Kademlia{routingTable, network, map[KademliaID][]byte{}}
 }
 
 func chk(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (kademlia *Kademlia) AddContact(contact Contact) {
+	kademlia.routingTable.AddContact(contact)
 }
 
 func (kademlia *Kademlia) Listen(ip string, port int) {
@@ -153,7 +164,6 @@ func (kademlia *Kademlia) SendHeartbeatMessage() {
 }
 
 func (kademlia *Kademlia) sendMessage(message string, contact *Contact) {
-
 	targetAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	chk(err)
 	localAddr, err := net.ResolveUDPAddr("udp", kademlia.routingTable.me.Address)
@@ -176,7 +186,7 @@ func (kademlia *Kademlia) sendMessage(message string, contact *Contact) {
 
 func (kademlia *Kademlia) run(nodeType string) {
 	if nodeType == "master" {
-		node := NewKademliaNode()
+		node := NewKademliaNode("")
 		go node.Listen("", 8000)
 		for {
 
@@ -185,7 +195,7 @@ func (kademlia *Kademlia) run(nodeType string) {
 		routingTable := NewRoutingTable(NewContact(NewRandomKademliaID(), ":8001"))
 		c := NewContact(NewRandomKademliaID(), ":8000")
 		routingTable.AddContact(c)
-		node := NewKademliaNode()
+		node := NewKademliaNode("")
 		go node.Listen("", 8001)
 		for {
 
