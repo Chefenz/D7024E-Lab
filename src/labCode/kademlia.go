@@ -33,11 +33,11 @@ func chk(err error) {
 	}
 }
 
-func (kademlia *Kademlia) Listen(ip string, poroutingTable int) {
+func (kademlia *Kademlia) Listen(ip string, port int) {
 
-	for newPoroutingTable := poroutingTable; newPoroutingTable <= poroutingTable+50; newPoroutingTable++ {
+	for newPort := port; newPort <= port+50; newPort++ {
 
-		udpAddr, err := net.ResolveUDPAddr("udp", ip+":"+strconv.Itoa(newPoroutingTable))
+		udpAddr, err := net.ResolveUDPAddr("udp", ip+":"+strconv.Itoa(newPort))
 		chk(err)
 		conn, err := net.ListenUDP("udp", udpAddr)
 		chk(err)
@@ -87,7 +87,7 @@ func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
 		bucket := kademlia.routingTable.buckets[bucketIndex]
 		bucket.AddContact(transmitObj.Contact)
 		fmt.Println("node has been updated in bucket")
-	case "HEAroutingTableBEAT":
+	case "HEARTBEAT":
 		bucketIndex := kademlia.routingTable.getBucketIndex(transmitObj.Contact.ID)
 		bucket := kademlia.routingTable.buckets[bucketIndex]
 		bucket.AddContact(transmitObj.Contact)
@@ -108,21 +108,21 @@ func (kademlia *Kademlia) Ping(contact *Contact) {
 	kademlia.sendMessage("PING", contact)
 }
 
-func (kademlia *Kademlia) staroutingTableListen() {
+func (kademlia *Kademlia) startListen() {
 	kademlia.Listen(kademlia.routingTable.me.Address, 8050)
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {
 	alpha := 3
-	shoroutingTableList := kademlia.routingTable.FindClosestContacts(target.ID, alpha)
+	shortList := kademlia.routingTable.FindClosestContacts(target.ID, alpha)
 
-	for i := 0; i < len(shoroutingTableList); i++ {
-		kademlia.network.SendFindContactMessage(&shoroutingTableList[i])
-		//kademlia.routingTable.AddContact(shoroutingTableList[0]) lägg till contact från svar av SendFindContactMessage
+	for i := 0; i < len(shortList); i++ {
+		kademlia.network.SendFindContactMessage(&shortList[i])
+		//kademlia.routingTable.AddContact(shortList[0]) lägg till contact från svar av SendFindContactMessage
 	}
 
-	if &shoroutingTableList[0] == target { //Kan ändra shoroutingTablelist till svar från findContact message
-		kademlia.routingTable.AddContact(shoroutingTableList[0])
+	if &shortList[0] == target { //Kan ändra shortlist till svar från findContact message
+		kademlia.routingTable.AddContact(shortList[0])
 	}
 }
 
@@ -144,7 +144,7 @@ func (kademlia *Kademlia) SendHeartbeatMessage() {
 			contacts := bucket.GetContactAndCalcDistance(kademlia.routingTable.me.ID)
 			for k := 0; k < len(contacts); k++ {
 				contact := contacts[k]
-				kademlia.sendMessage("HEAroutingTableBEAT", &contact)
+				kademlia.sendMessage("HEARTBEAT", &contact)
 
 			}
 		}
@@ -195,24 +195,24 @@ func (kademlia *Kademlia) run(nodeType string) {
 }
 
 func (kademlia *Kademlia) heartbeatSignal() {
-	hearoutingTablebeat := make(chan bool)
+	heartbeat := make(chan bool)
 
-	// StaroutingTable a goroutine to send hearoutingTablebeat signals at a regular interval.
+	// Start a goroutine to send heartbeat signals at a regular interval.
 	go func() {
 		for {
 			time.Sleep(time.Second * 5)
-			hearoutingTablebeat <- true
+			heartbeat <- true
 		}
 	}()
 
-	// Listen for hearoutingTablebeat signals.
+	// Listen for heartbeat signals.
 	for {
 		select {
-		case <-hearoutingTablebeat:
-			fmt.Println("HearoutingTablebeat")
+		case <-heartbeat:
+			fmt.Println("Heartbeat")
 			kademlia.SendHeartbeatMessage()
 		default:
-			// No hearoutingTablebeat received.
+			// No heartbeat received.
 		}
 	}
 }

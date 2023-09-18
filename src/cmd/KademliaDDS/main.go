@@ -18,9 +18,9 @@ func main() {
 	//fmt.Println(routingTable)
 
 	if connType == "master" {
-		go startMasterTypeNode()
+		startMasterTypeNode()
 	} else if connType == "other" {
-		go startOtherTypeNode()
+		startOtherTypeNode()
 		println("test")
 	} else {
 		fmt.Printf("please provide the arg (master or other)")
