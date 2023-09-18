@@ -3,45 +3,45 @@ package main
 import (
 	"fmt"
 	"kademlia-app/labCode"
-	//"os"
+	"os"
 )
 
 func main() {
 
-	fmt.Println("Network Join Test")
-	masterID := startMasterTypeNode()
-	labCode.JoinNetwork(masterID, "MasterNode")
+	connType := os.Args[1]
 
-	/*
-		connType := os.Args[1]
+	fmt.Println("Running node as:", connType)
 
-		fmt.Println("Running node as:", connType)
+	if connType == "master" {
+		startMasterTypeNode()
+	} else if connType == "other" {
+		startOtherTypeNode()
+	} else {
+		fmt.Printf("please provide the arg (master or other)")
+	}
 
-		if connType == "master" {
-			startMasterTypeNode()
-		} else if connType == "other" {
-			startOtherTypeNode()
-		} else {
-			fmt.Printf("please provide the arg (master or other)")
-		}
-	*/
 }
 
 func startOtherTypeNode() {
-	n := labCode.Network{}
-	c := labCode.NewContact(labCode.NewRandomKademliaID(), "")
-	labCode.NewRoutingTable(c)
-	//labCode.AddContact()
+	node := labCode.NewKademliaNode(":8051")
+	c := labCode.NewContact(labCode.NewRandomKademliaID(), ":8050")
+	c.CalcDistance(node.RoutingTable.Me.ID)
+	node.RoutingTable.Me.CalcDistance(c.ID)
+	fmt.Println(node.RoutingTable.Me)
+	fmt.Println(c)
+	node.RoutingTable.AddContact(c)
+	go node.Listen("", 8051)
+	node.Ping(&c)
+	for {
 
-	//labCode.lookupContact(self)
-	n.SendPingMessage(&c)
+	}
+
 }
 
-func startMasterTypeNode() *labCode.KademliaID {
-	labCode.Listen("MasterNode", 8000)
-	masterID := labCode.NewRandomKademliaID()
-	masterContact := labCode.NewContact(masterID, "MasterNode")
-	//masterContact := labCode.NewContact(labCode.NewRandomKademliaID(), "MasterNode")
-	labCode.NewRoutingTable(masterContact)
-	return (masterID)
+func startMasterTypeNode() {
+	node := labCode.NewKademliaNode(":8050")
+	go node.Listen("", 8050)
+	for {
+
+	}
 }
