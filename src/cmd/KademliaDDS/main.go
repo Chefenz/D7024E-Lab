@@ -27,11 +27,10 @@ func startOtherTypeNode() {
 	c := labCode.NewContact(labCode.NewRandomKademliaID(), ":8050")
 	c.CalcDistance(node.RoutingTable.Me.ID)
 	node.RoutingTable.Me.CalcDistance(c.ID)
-	fmt.Println(node.RoutingTable.Me)
-	fmt.Println(c)
 	node.RoutingTable.AddContact(c)
 	go node.Listen("", 8051)
-	node.Ping(&c)
+	//node.Ping(&c)
+	node.LookupContact(&node.RoutingTable.Me)
 	for {
 
 	}
