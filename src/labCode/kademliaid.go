@@ -1,6 +1,7 @@
 package labCode
 
 import (
+	"crypto/sha1"
 	"encoding/hex"
 	"math/rand"
 )
@@ -13,7 +14,8 @@ type KademliaID [IDLength]byte
 
 // NewKademliaID returns a new instance of a KademliaID based on the string input
 func NewKademliaID(data string) *KademliaID {
-	decoded, _ := hex.DecodeString(data)
+	encoding := []byte(data)
+	decoded := sha1.Sum(encoding)
 
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {

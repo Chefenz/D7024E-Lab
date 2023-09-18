@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	containerName := os.Getenv("CONTAINER_NAME")
+	//containerName := os.Getenv("CONTAINER_NAME")
+	containerName := "master"
 
 	var kademliaNode labCode.Kademlia
 	if containerName == "master" {
@@ -15,7 +16,7 @@ func main() {
 		nodeAddress := os.Getenv("HOSTNAME")
 		kademliaNode = labCode.NewKademliaNode(nodeAddress)
 
-		masterNodeId := labCode.NewKademliaID("masterNodeID")
+		masterNodeId := labCode.NewKademliaID("masterNodeTest")
 		masterNodeAddress := "master"
 		masterContact := labCode.NewContact(masterNodeId, masterNodeAddress)
 

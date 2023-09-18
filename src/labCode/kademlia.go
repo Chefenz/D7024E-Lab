@@ -28,7 +28,7 @@ func NewKademliaNode(address string) Kademlia {
 }
 
 func NewMasterKademliaNode() Kademlia {
-	id := NewKademliaID("masterNodeID")
+	id := NewKademliaID("masterNodeTest")
 	routingTable := NewRoutingTable(NewContact(id, "master"))
 	network := NewNetwork()
 	return Kademlia{routingTable, network, map[KademliaID][]byte{}}
