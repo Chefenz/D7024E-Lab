@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#Traverse to the docker files
+cd ..
+
 echo ""
 echo "Starting up kademlia network and nodes"
 echo ""

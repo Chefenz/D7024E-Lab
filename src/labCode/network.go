@@ -14,66 +14,62 @@ type Network struct {
 func Listen(ip string, port int) {
 	// Listen on TCP port 2000 on all available unicast and
 	// anycast IP addresses of the local system.
-	portString := strconv.Itoa(port)
-	l, err := net.Listen("tcp", ip+":"+portString)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer l.Close()
-	for {
-		// Wait for a connection.
-		conn, err := l.Accept()
-		if err != nil {
-			log.Fatal(err)
-		}
-		// Handle the connection in a new goroutine.
-		// The loop then returns to accepting, so that
-		// multiple connections may be served concurrently.
-		go func(c net.Conn) {
-			// Echo all incoming data.
-			buf := make([]byte, 0, 4096) // big buffer
-			tmp := make([]byte, 256)     // using small tmo buffer for demonstrating
-			for {
-				n, err := conn.Read(tmp)
-				if err != nil {
-					if err != io.EOF {
-						fmt.Println("read error:", err)
-					}
-					break
-				}
-				//fmt.Println("got", n, "bytes.")
-				buf = append(buf, tmp[:n]...)
 
+	for newPort := port; newPort <= port+50; newPort++ {
+		portString := strconv.Itoa(newPort)
+		targetAddr := ip + ":" + portString
+		l, err := net.Listen("tcp", targetAddr)
+		if err != nil {
+			continue
+		}
+		fmt.Println("Listening to: ", targetAddr)
+		defer l.Close()
+		for {
+			// Wait for a connection.
+			conn, err := l.Accept()
+			if err != nil {
+				log.Fatal(err)
 			}
-			fmt.Println("")
-			fmt.Println("total size:", len(buf))
-			io.Copy(c, c)
-			// Shut down the connection.
-			c.Close()
-		}(conn)
+			// Handle the connection in a new goroutine.
+			// The loop then returns to accepting, so that
+			// multiple connections may be served concurrently.
+			go func(c net.Conn) {
+				fmt.Println("Connection from", conn.RemoteAddr())
+				// Echo all incoming data.
+				buf := make([]byte, 0, 4096) // big buffer
+				tmp := make([]byte, 256)     // using small tmo buffer for demonstrating
+				for {
+					n, err := conn.Read(tmp)
+					if err != nil {
+						if err != io.EOF {
+							fmt.Println("read error:", err)
+						}
+						break
+					}
+					buf = append(buf, tmp[:n]...)
+
+					fmt.Println("Handling RPC: ", string(buf))
+					switch string(buf) {
+					case "PING":
+						fmt.Println("Returning message: ", "PONG")
+						c.Write([]byte("PONG"))
+					case "HEARTBEAT":
+
+					case "FINDCONTACT":
+						fmt.Println("This should handle lookup")
+					case "FINDDATA":
+						fmt.Println("This should handle finddata")
+					case "STORE":
+						fmt.Println("This should handle store")
+					}
+				}
+			}(conn)
+		}
 	}
 }
 
 func (network *Network) SendPingMessage(contact *Contact) {
-	// Establish connection over tcp on port 8000
-	conn, err := net.Dial("tcp", ":8000")
-
-	if err != nil {
-		// Handle the error, log it, or return an error message
-		fmt.Printf("Failed to connect: %v", err)
-		return
-	}
-
-	data := []byte("ping")
-	_, writeErr := conn.Write(data)
-
-	if writeErr != nil {
-		// Handle the write error
-		fmt.Printf("Failed to write data: %v", writeErr)
-	}
-
-	// Close the connection when done
-	conn.Close()
+	// TODO
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
