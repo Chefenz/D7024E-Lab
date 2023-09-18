@@ -2,15 +2,6 @@ package main
 
 import (
 	"fmt"
-<<<<<<< HEAD
-	"os"
-)
-
-func main() {
-	//Use KEY = 'HOSTNAME' aswell later to retrive the address of the node
-	containerName := os.Getenv("CONTAINER_NAME")
-	fmt.Printf("Container Name: %s\n", containerName)
-=======
 	"kademlia-app/labCode"
 	"os"
 	"time"
@@ -40,10 +31,7 @@ func main() {
 }
 
 func startOtherTypeNode() {
-	rt := labCode.NewRoutingTable(labCode.NewContact(labCode.NewRandomKademliaID(), ":8001"))
-	c := labCode.NewContact(labCode.NewRandomKademliaID(), ":8000")
-	rt.AddContact(c)
-	node := labCode.InitKademliaNode(rt)
+	node := labCode.NewKademliaNode()
 	go node.Listen("", 8001)
 	heartbeatSignal(&node)
 	time.Sleep(time.Second)
@@ -54,8 +42,7 @@ func startOtherTypeNode() {
 }
 
 func startMasterTypeNode() {
-	rt := labCode.NewRoutingTable(labCode.NewContact(labCode.NewRandomKademliaID(), ":8000"))
-	node := labCode.InitKademliaNode(rt)
+	node := labCode.NewKademliaNode()
 	go node.Listen("", 8000)
 	for {
 
@@ -83,5 +70,4 @@ func heartbeatSignal(node *labCode.Kademlia) {
 			// No heartbeat received.
 		}
 	}
->>>>>>> feature/ping_test
 }

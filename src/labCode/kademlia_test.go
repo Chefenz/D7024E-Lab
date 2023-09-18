@@ -10,14 +10,13 @@ import (
 func testPing(t *testing.T) {
 
 	masterContact := NewContact(NewRandomKademliaID(), ":8000")
-	masterRt := NewRoutingTable(masterContact)
-	masterNode := InitKademliaNode(masterRt)
+	masterNode := NewKademliaNode()
 	go masterNode.run("master")
 
 	otherContact := NewContact(NewRandomKademliaID(), ":8001")
 	otherRt := NewRoutingTable(otherContact)
 	otherRt.AddContact(masterContact)
-	otherNode := InitKademliaNode(otherRt)
+	otherNode := NewKademliaNode()
 	go otherNode.run("other")
 
 	asserts := assert.New(t)
@@ -27,14 +26,13 @@ func testPing(t *testing.T) {
 
 func testHeartbeat(t *testing.T) {
 	masterContact := NewContact(NewRandomKademliaID(), ":8000")
-	masterRt := NewRoutingTable(masterContact)
-	masterNode := InitKademliaNode(masterRt)
+	masterNode := NewKademliaNode()
 	go masterNode.run("master")
 
 	otherContact := NewContact(NewRandomKademliaID(), ":8001")
 	otherRt := NewRoutingTable(otherContact)
 	otherRt.AddContact(masterContact)
-	otherNode := InitKademliaNode(otherRt)
+	otherNode := NewKademliaNode()
 	go otherNode.run("other")
 
 	otherNode.heartbeatSignal()
