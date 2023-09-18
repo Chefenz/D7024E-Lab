@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 )
 
 type Kademlia struct {
@@ -42,7 +43,6 @@ func (kademlia *Kademlia) Listen(ip string, port int) {
 		buffer := make([]byte, 4096)
 
 		for {
-			fmt.Printf("Here")
 			n, err := conn.Read(buffer)
 			if err != nil {
 				fmt.Println("Error reading from UDP connection:", err)
@@ -100,7 +100,6 @@ func (kademlia *Kademlia) Ping(contact *Contact) {
 
 	fmt.Println("sending ping to addr:", contact.Address)
 	kademlia.sendMessage("PING", contact)
-
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {
@@ -153,4 +152,48 @@ func (kademlia *Kademlia) sendMessage(message string, contact *Contact) {
 
 	conn.Close()
 
+}
+
+func (kademlia *Kademlia) run(nodeType string) {
+	if nodeType == "master" {
+		rt := NewRoutingTable(NewContact(NewRandomKademliaID(), ":8000"))
+		node := InitKademliaNode(rt)
+		go node.Listen("", 8000)
+		for {
+
+		}
+	} else {
+		rt := NewRoutingTable(NewContact(NewRandomKademliaID(), ":8001"))
+		c := NewContact(NewRandomKademliaID(), ":8000")
+		rt.AddContact(c)
+		node := InitKademliaNode(rt)
+		go node.Listen("", 8001)
+		for {
+
+		}
+	}
+
+}
+
+func (kademlia *Kademlia) heartbeatSignal() {
+	heartbeat := make(chan bool)
+
+	// Start a goroutine to send heartbeat signals at a regular interval.
+	go func() {
+		for {
+			time.Sleep(time.Second * 5)
+			heartbeat <- true
+		}
+	}()
+
+	// Listen for heartbeat signals.
+	for {
+		select {
+		case <-heartbeat:
+			fmt.Println("Heartbeat")
+			kademlia.SendHeartbeatMessage()
+		default:
+			// No heartbeat received.
+		}
+	}
 }
