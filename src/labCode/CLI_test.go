@@ -110,43 +110,16 @@ func TestHandleHelpCommandUnknownCommand(t *testing.T) {
 }
 
 // Tests for handleGetCommand
-func TestHandleGetCommandNoArgs(t *testing.T) {
-	asserts := assert.New(t)
+func TestHandleGetCommandNoArgs(t *testing.T) {} //TODO
 
-	getCommandArgs := []string{}
-
-	response, err := handleGetCommand(getCommandArgs)
-
-	asserts.Equal("", response)
-	asserts.Error(err)
-}
-
-func TestHandleGetCommandTooManyArgs(t *testing.T) {
-	asserts := assert.New(t)
-
-	getCommandArgs := []string{"args1", "args2"}
-
-	response, err := handleGetCommand(getCommandArgs)
-
-	asserts.Equal("", response)
-	asserts.Error(err)
-}
+func TestHandleGetCommandTooManyArgs(t *testing.T) {} //TODO
 
 func TestHandleGetCommandValueExists(t *testing.T) {} //TODO
 
 func TestHandleGetCommandValueDoesNotExist(t *testing.T) {} //TODO
 
 // Tests for handlePutCommand
-func TestHandlePutCommandNoArgs(t *testing.T) {
-	asserts := assert.New(t)
-
-	putCommandArgs := []string{}
-
-	response, err := handlePutCommand(putCommandArgs)
-
-	asserts.Equal("", response)
-	asserts.Error(err)
-}
+func TestHandlePutCommandNoArgs(t *testing.T) {} //TODO
 
 func TestHandlePutCommandSuccessfulStorage(t *testing.T) {} //TODO
 

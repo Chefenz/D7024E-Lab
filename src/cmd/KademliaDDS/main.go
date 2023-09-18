@@ -26,7 +26,7 @@ func main() {
 	}
 
 	//Start the command line user face
-	labCode.RunCLI()
+	//labCode.RunCLI()
 }
 
 func startOtherTypeNode() {

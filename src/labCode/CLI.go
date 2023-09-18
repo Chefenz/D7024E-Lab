@@ -27,7 +27,7 @@ const (
 		"or more information about a specific command"
 )
 
-func RunCLI() {
+func RunCLI(kademliaNode Kademlia) {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
@@ -50,14 +50,14 @@ func RunCLI() {
 
 		switch command {
 		case "put":
-			response, err := handlePutCommand(args)
+			response, err := handlePutCommand(args, kademliaNode)
 			if err != nil {
 				printToTerminal(err.Error())
 				break
 			}
 			printToTerminal(response)
 		case "get":
-			response, err := handleGetCommand(args)
+			response, err := handleGetCommand(args, kademliaNode)
 			if err != nil {
 				printToTerminal(err.Error())
 				break
@@ -87,7 +87,7 @@ func parseInput(userInput string) (string, []string, error) {
 	return command, args[1:], nil
 }
 
-func handlePutCommand(args []string) (string, error) {
+func handlePutCommand(args []string, kademliaNode Kademlia) (string, error) {
 	if len(args) == 0 {
 		return "", errors.New(InvalidArgsForPutCommandMsg + PutCommandUsageMsg)
 
@@ -98,7 +98,7 @@ func handlePutCommand(args []string) (string, error) {
 
 }
 
-func handleGetCommand(args []string) (string, error) {
+func handleGetCommand(args []string, kademliaNode Kademlia) (string, error) {
 	if len(args) == 0 || len(args) > 1 {
 		return "", errors.New(InvalidArgsForGetCommandMsg + GetCommandUsageMsg)
 
