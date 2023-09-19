@@ -305,11 +305,17 @@ func (kademlia *Kademlia) heartbeatSignal() {
 }
 
 /*
-func JoinNetwork() Network {
+func (kademlia *Kademlia) JoinNetwork() {
 	node := NewKademliaNode()
 	network := Network{}
-	node.routingTable.AddContact(NewContact(&masterID, masterIP))
+
+	masterNodeId := NewKademliaID("masterNode")
+	masterNodeAddress := "master"
+	masterContact := NewContact(masterNodeId, masterNodeAddress)
+
+	node.RoutingTable.AddContact(NewContact(&masterID, masterIP))
 	//node.LookupContact()
-	return network
+	kademlia.network = network
 }
+
 */

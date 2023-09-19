@@ -11,6 +11,7 @@ func main() {
 	var kademliaNode labCode.Kademlia
 	if containerName == "master" {
 		kademliaNode = labCode.NewMasterKademliaNode()
+		go kademliaNode.Listen("master", 8050)
 	} else {
 		nodeAddress := os.Getenv("HOSTNAME")
 		kademliaNode = labCode.NewKademliaNode(nodeAddress + ":8050")
@@ -21,8 +22,9 @@ func main() {
 
 		kademliaNode.RoutingTable.AddContact(masterContact)
 
-		//TODO: Add find contact on myself
-		//Start listen
+		go kademliaNode.Listen(nodeAddress, 8050)
+
+		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
 	}
 
 	labCode.RunCLI(kademliaNode)
