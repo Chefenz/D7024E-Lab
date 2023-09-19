@@ -207,14 +207,17 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 	shortlist := kademlia.RoutingTable.FindClosestContacts(target.ID, alpha)
 
 	for i := 0; i < len(shortlist); i++ {
+		fmt.Println("Start of lookup contact")
 
 		findContactPayload := FindContactPayload{Sender: kademlia.RoutingTable.Me, Target: *target}
 
 		transmitObj := TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload}
 
 		if *shortlist[i].ID == *kademlia.RoutingTable.Me.ID {
+			fmt.Println("in found myself in shortlist lookup contact")
 			kademlia.sendMessage(&transmitObj, &shortlist[i])
 		}
+		fmt.Println("Outside if in lookup contact")
 
 		//kademlia.routingTable.AddContact(shortList[0]) lägg till contact från svar av SendFindContactMessage
 	}
