@@ -1,46 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"kademlia-app/labCode"
 	"os"
 )
 
 func main() {
+	containerName := os.Getenv("CONTAINER_NAME")
 
-	connType := os.Args[1]
-
-	fmt.Println("Running node as:", connType)
-
-	if connType == "master" {
-		startMasterTypeNode()
-	} else if connType == "other" {
-		startOtherTypeNode()
+	var kademliaNode labCode.Kademlia
+	if containerName == "master" {
+		kademliaNode = labCode.NewMasterKademliaNode()
 	} else {
-		fmt.Printf("please provide the arg (master or other)")
+		nodeAddress := os.Getenv("HOSTNAME")
+		kademliaNode = labCode.NewKademliaNode(nodeAddress)
+
+		masterNodeId := labCode.NewKademliaID("masterNode")
+		masterNodeAddress := "master"
+		masterContact := labCode.NewContact(masterNodeId, masterNodeAddress)
+
+		kademliaNode.AddContact(masterContact)
+
+		//TODO: Add find contact on myself
 	}
 
-}
+	labCode.RunCLI(kademliaNode)
 
-func startOtherTypeNode() {
-	node := labCode.NewKademliaNode(":8051")
-	c := labCode.NewContact(labCode.NewRandomKademliaID(), ":8050")
-	c.CalcDistance(node.RoutingTable.Me.ID)
-	node.RoutingTable.Me.CalcDistance(c.ID)
-	node.RoutingTable.AddContact(c)
-	go node.Listen("", 8051)
-	//node.Ping(&c)
-	node.LookupContact(&node.RoutingTable.Me)
-	for {
-
-	}
-
-}
-
-func startMasterTypeNode() {
-	node := labCode.NewKademliaNode(":8050")
-	go node.Listen("", 8050)
-	for {
-
-	}
 }
