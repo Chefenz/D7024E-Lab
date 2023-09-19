@@ -13,15 +13,16 @@ func main() {
 		kademliaNode = labCode.NewMasterKademliaNode()
 	} else {
 		nodeAddress := os.Getenv("HOSTNAME")
-		kademliaNode = labCode.NewKademliaNode(nodeAddress)
+		kademliaNode = labCode.NewKademliaNode(nodeAddress + ":8050")
 
 		masterNodeId := labCode.NewKademliaID("masterNode")
 		masterNodeAddress := "master"
 		masterContact := labCode.NewContact(masterNodeId, masterNodeAddress)
 
-		kademliaNode.AddContact(masterContact)
+		kademliaNode.RoutingTable.AddContact(masterContact)
 
 		//TODO: Add find contact on myself
+		//Start listen
 	}
 
 	labCode.RunCLI(kademliaNode)

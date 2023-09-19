@@ -9,7 +9,7 @@ import (
 )
 
 type Kademlia struct {
-	routingTable *RoutingTable
+	RoutingTable *RoutingTable
 	network      Network
 	data         map[KademliaID][]byte
 }
@@ -29,7 +29,7 @@ func NewKademliaNode(address string) Kademlia {
 
 func NewMasterKademliaNode() Kademlia {
 	id := NewKademliaID("masterNode")
-	routingTable := NewRoutingTable(NewContact(id, "master"))
+	routingTable := NewRoutingTable(NewContact(id, "master"+":8050"))
 	network := NewNetwork()
 	return Kademlia{routingTable, network, map[KademliaID][]byte{}}
 }
@@ -38,10 +38,6 @@ func chk(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func (kademlia *Kademlia) AddContact(contact Contact) {
-	kademlia.routingTable.AddContact(contact)
 }
 
 func (kademlia *Kademlia) Listen(ip string, port int) {
@@ -94,13 +90,13 @@ func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
 		kademlia.sendMessage("PONG", &transmitObj.Contact)
 	case "PONG":
 		fmt.Println("Received PONG response from", transmitObj.Contact.Address)
-		bucketIndex := kademlia.routingTable.getBucketIndex(transmitObj.Contact.ID)
-		bucket := kademlia.routingTable.buckets[bucketIndex]
+		bucketIndex := kademlia.RoutingTable.getBucketIndex(transmitObj.Contact.ID)
+		bucket := kademlia.RoutingTable.buckets[bucketIndex]
 		bucket.AddContact(transmitObj.Contact)
 		fmt.Println("node has been updated in bucket")
 	case "HEARTBEAT":
-		bucketIndex := kademlia.routingTable.getBucketIndex(transmitObj.Contact.ID)
-		bucket := kademlia.routingTable.buckets[bucketIndex]
+		bucketIndex := kademlia.RoutingTable.getBucketIndex(transmitObj.Contact.ID)
+		bucket := kademlia.RoutingTable.buckets[bucketIndex]
 		bucket.AddContact(transmitObj.Contact)
 		fmt.Println("node has been updated in bucket")
 	case "FINDCONTACT":
@@ -120,12 +116,12 @@ func (kademlia *Kademlia) Ping(contact *Contact) {
 }
 
 func (kademlia *Kademlia) startListen() {
-	kademlia.Listen(kademlia.routingTable.me.Address, 8050)
+	kademlia.Listen(kademlia.RoutingTable.me.Address, 8050)
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {
 	alpha := 3
-	shortList := kademlia.routingTable.FindClosestContacts(target.ID, alpha)
+	shortList := kademlia.RoutingTable.FindClosestContacts(target.ID, alpha)
 
 	for i := 0; i < len(shortList); i++ {
 		kademlia.network.SendFindContactMessage(&shortList[i])
@@ -133,7 +129,7 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 	}
 
 	if &shortList[0] == target { //Kan ändra shortlist till svar från findContact message
-		kademlia.routingTable.AddContact(shortList[0])
+		kademlia.RoutingTable.AddContact(shortList[0])
 	}
 }
 
@@ -146,13 +142,13 @@ func (kademlia *Kademlia) Store(data []byte) {
 }
 
 func (kademlia *Kademlia) SendHeartbeatMessage() {
-	for i := 0; i < len(kademlia.routingTable.buckets); i++ {
-		bucket := kademlia.routingTable.buckets[i]
+	for i := 0; i < len(kademlia.RoutingTable.buckets); i++ {
+		bucket := kademlia.RoutingTable.buckets[i]
 		if bucket.list.Len() > 0 {
 			fmt.Println("Size of bucket ", i, ": ", bucket.list.Len())
 		}
 		for j := 0; j < bucket.list.Len(); j++ {
-			contacts := bucket.GetContactAndCalcDistance(kademlia.routingTable.me.ID)
+			contacts := bucket.GetContactAndCalcDistance(kademlia.RoutingTable.me.ID)
 			for k := 0; k < len(contacts); k++ {
 				contact := contacts[k]
 				kademlia.sendMessage("HEARTBEAT", &contact)
@@ -166,12 +162,12 @@ func (kademlia *Kademlia) SendHeartbeatMessage() {
 func (kademlia *Kademlia) sendMessage(message string, contact *Contact) {
 	targetAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	chk(err)
-	localAddr, err := net.ResolveUDPAddr("udp", kademlia.routingTable.me.Address)
+	localAddr, err := net.ResolveUDPAddr("udp", kademlia.RoutingTable.me.Address)
 	chk(err)
 	conn, err := net.DialUDP("udp", localAddr, targetAddr)
 	chk(err)
 
-	transmitObj := TransmitObj{Message: message, Contact: kademlia.routingTable.me}
+	transmitObj := TransmitObj{Message: message, Contact: kademlia.RoutingTable.me}
 
 	// Marshal the struct into JSON
 	sendJSON, err := json.Marshal(transmitObj)
