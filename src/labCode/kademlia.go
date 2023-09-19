@@ -212,7 +212,10 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 
 		transmitObj := TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload}
 
-		kademlia.sendMessage(&transmitObj, &shortList[i])
+		if shortList[i] != kademlia.RoutingTable.Me {
+			kademlia.sendMessage(&transmitObj, &shortList[i])
+		}
+
 		//kademlia.routingTable.AddContact(shortList[0]) lägg till contact från svar av SendFindContactMessage
 	}
 }
