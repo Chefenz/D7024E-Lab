@@ -118,14 +118,15 @@ func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
 			fmt.Println("Data is not a Map")
 		}
 
-		fmt.Println(findContactPayloadMap)
+		//fmt.Println(findContactPayloadMap)
 
 		var findContactPayload *FindContactPayload
 		err := mapstructure.Decode(findContactPayloadMap, &findContactPayload)
 		chk(err)
 
-		fmt.Println(findContactPayload)
+		//fmt.Println(findContactPayload)
 
+		kademlia.RoutingTable.AddContact(findContactPayload.Sender)
 		closestContacts := kademlia.RoutingTable.FindClosestContacts(findContactPayload.Target.ID, alpha)
 
 		returnFindContactPayload := ReturnFindContactPayload{Shortlist: closestContacts, Target: findContactPayload.Target}
@@ -152,8 +153,7 @@ func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
 
 		for i := 0; i < len(shortlist); i++ {
 			kademlia.RoutingTable.AddContact(shortlist[0])
-
-			if shortlist[i] == target {
+			if *shortlist[i].ID == *target.ID {
 				foundTarget = true
 				fmt.Println("Found The Target Node :)")
 			}
@@ -299,8 +299,8 @@ func (kademlia *Kademlia) heartbeatSignal() {
 
 /*
 func JoinNetwork() Network {
-	node := InitKademliaNode()
-	network := Network{masterID}
+	node := NewKademliaNode()
+	network := Network{}
 	node.routingTable.AddContact(NewContact(&masterID, masterIP))
 	//node.LookupContact()
 	return network
