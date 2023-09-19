@@ -125,16 +125,11 @@ func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
 			fmt.Println("Data is not a Map")
 		}
 
-		//fmt.Println(findContactPayloadMap)
-
 		var findContactPayload *FindContactPayload
 		err := mapstructure.Decode(findContactPayloadMap, &findContactPayload)
 		chk(err)
 
-		//fmt.Println(findContactPayload)
-
 		if *findContactPayload.Sender.ID != *kademlia.RoutingTable.Me.ID {
-			fmt.Println("in FIND_CONTACT RPC TO MYSELF if sats")
 			kademlia.RoutingTable.AddContact(findContactPayload.Sender)
 		}
 		closestContacts := kademlia.RoutingTable.FindClosestContacts(findContactPayload.Target.ID, alpha)
@@ -163,7 +158,7 @@ func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
 
 		for i := 0; i < len(shortlist); i++ {
 			if *shortlist[i].ID != *kademlia.RoutingTable.Me.ID {
-				fmt.Println("in RETURN_FIND_CONTACT RPC TO MYSELF if sats")
+
 				kademlia.RoutingTable.AddContact(shortlist[0])
 			}
 
@@ -214,7 +209,6 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 	shortlist := kademlia.RoutingTable.FindClosestContacts(target.ID, alpha)
 
 	for i := 0; i < len(shortlist); i++ {
-		fmt.Println("Start of lookup contact")
 
 		findContactPayload := FindContactPayload{Sender: kademlia.RoutingTable.Me, Target: *target}
 
@@ -261,18 +255,6 @@ func (kademlia *Kademlia) sendMessage(transmitObj *TransmitObj, contact *Contact
 
 	targetAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	chk(err)
-
-	fmt.Println("First error place")
-	fmt.Println("Target Address: ", targetAddr)
-	fmt.Println(contact)
-
-	localAddr, err := net.ResolveUDPAddr("udp", kademlia.RoutingTable.Me.Address)
-	chk(err)
-
-	fmt.Println("second error place")
-	fmt.Println("Local Address: ", localAddr)
-	fmt.Println(contact)
-	fmt.Println(localAddr)
 
 	conn, err := net.DialUDP("udp", nil, targetAddr)
 	chk(err)
