@@ -1,11 +1,6 @@
 package labCode
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
+/*
 // Test for sending ping and recieving pong as reponse
 func testPing(t *testing.T) {
 
@@ -42,3 +37,5 @@ func testHeartbeat(t *testing.T) {
 	asserts.Panics(func() { otherNode.heartbeatSignal() }, "The code did not panic")
 
 }
+
+*/
