@@ -22,7 +22,7 @@ func main() {
 		fmt.Println("After Creation")
 
 		masterNodeId := labCode.NewKademliaID("masterNode")
-		masterNodeAddress := "master"
+		masterNodeAddress := "master:8050"
 		masterContact := labCode.NewContact(masterNodeId, masterNodeAddress)
 		fmt.Println("After master contact creation")
 
