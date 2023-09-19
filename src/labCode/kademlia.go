@@ -287,7 +287,7 @@ func (kademlia *Kademlia) Run(nodeType string) {
 
 }
 
-func (kademlia *Kademlia) heartbeatSignal() {
+func (kademlia *Kademlia) HeartbeatSignal() {
 	heartbeat := make(chan bool)
 
 	// Start a goroutine to send heartbeat signals at a regular interval.

@@ -26,7 +26,7 @@ func main() {
 
 		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
 
-		go kademliaNode.SendHeartbeatMessage()
+		go kademliaNode.HeartbeatSignal()
 
 	}
 
