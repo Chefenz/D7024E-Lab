@@ -204,16 +204,16 @@ func (kademlia *Kademlia) startListen() {
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {
-	shortList := kademlia.RoutingTable.FindClosestContacts(target.ID, alpha)
+	shortlist := kademlia.RoutingTable.FindClosestContacts(target.ID, alpha)
 
-	for i := 0; i < len(shortList); i++ {
+	for i := 0; i < len(shortlist); i++ {
 
 		findContactPayload := FindContactPayload{Sender: kademlia.RoutingTable.Me, Target: *target}
 
 		transmitObj := TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload}
 
-		if shortList[i] != kademlia.RoutingTable.Me {
-			kademlia.sendMessage(&transmitObj, &shortList[i])
+		if *shortlist[i].ID == *kademlia.RoutingTable.Me.ID {
+			kademlia.sendMessage(&transmitObj, &shortlist[i])
 		}
 
 		//kademlia.routingTable.AddContact(shortList[0]) lägg till contact från svar av SendFindContactMessage
