@@ -16,7 +16,7 @@ services:
         max_attempts: 3
         window: 10s
     ports:
-      - "8000:8050"
+      - "8000:8050/udp"
     networks:
       - kademlia_network
   kademliaNodes:
@@ -34,7 +34,7 @@ services:
         max_attempts: 3
         window: 10s
     ports:
-      - "8001-8049:8050"
+      - "8001-8049:8050/udp"
     depends_on:
       - masterNode
     networks:
