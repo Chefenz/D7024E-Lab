@@ -133,7 +133,10 @@ func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
 
 		//fmt.Println(findContactPayload)
 
-		kademlia.RoutingTable.AddContact(findContactPayload.Sender)
+		if *findContactPayload.Sender.ID != *kademlia.RoutingTable.Me.ID {
+			fmt.Println("in FIND_CONTACT RPC TO MYSELF if sats")
+			kademlia.RoutingTable.AddContact(findContactPayload.Sender)
+		}
 		closestContacts := kademlia.RoutingTable.FindClosestContacts(findContactPayload.Target.ID, alpha)
 
 		returnFindContactPayload := ReturnFindContactPayload{Shortlist: closestContacts, Target: findContactPayload.Target}
@@ -159,7 +162,11 @@ func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
 		foundTarget := false
 
 		for i := 0; i < len(shortlist); i++ {
-			kademlia.RoutingTable.AddContact(shortlist[0])
+			if *shortlist[i].ID != *kademlia.RoutingTable.Me.ID {
+				fmt.Println("in RETURN_FIND_CONTACT RPC TO MYSELF if sats")
+				kademlia.RoutingTable.AddContact(shortlist[0])
+			}
+
 			if *shortlist[i].ID == *target.ID {
 				foundTarget = true
 				fmt.Println("Found The Target Node :)")
@@ -215,9 +222,9 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 
 		if *shortlist[i].ID == *kademlia.RoutingTable.Me.ID {
 			fmt.Println("in found myself in shortlist lookup contact")
-			kademlia.sendMessage(&transmitObj, &shortlist[i])
 		}
 		fmt.Println("Outside if in lookup contact")
+		kademlia.sendMessage(&transmitObj, &shortlist[i])
 
 		//kademlia.routingTable.AddContact(shortList[0]) lägg till contact från svar av SendFindContactMessage
 	}
