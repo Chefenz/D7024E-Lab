@@ -274,7 +274,7 @@ func (kademlia *Kademlia) sendMessage(transmitObj *TransmitObj, contact *Contact
 	fmt.Println(contact)
 	fmt.Println(localAddr)
 
-	conn, err := net.DialUDP("udp", localAddr, targetAddr)
+	conn, err := net.DialUDP("udp", nil, targetAddr)
 	chk(err)
 
 	// Marshal the struct into JSON
