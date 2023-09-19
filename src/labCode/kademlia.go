@@ -248,10 +248,22 @@ func (kademlia *Kademlia) sendMessage(transmitObj *TransmitObj, contact *Contact
 
 	targetAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	chk(err)
+
+	fmt.Println("Target Address: ", targetAddr)
+	fmt.Println(contact)
+
 	localAddr, err := net.ResolveUDPAddr("udp", kademlia.RoutingTable.Me.Address)
 	chk(err)
+	fmt.Println("First error place")
+	fmt.Println("Target Address: ", targetAddr)
+	fmt.Println(contact)
+	fmt.Println(localAddr)
 	conn, err := net.DialUDP("udp", localAddr, targetAddr)
 	chk(err)
+	fmt.Println("second error place")
+	fmt.Println("Target Address: ", targetAddr)
+	fmt.Println(contact)
+	fmt.Println(localAddr)
 
 	// Marshal the struct into JSON
 	sendJSON, err := json.Marshal(transmitObj)
