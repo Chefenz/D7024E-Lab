@@ -13,12 +13,12 @@ func main() {
 	if containerName == "master" {
 		fmt.Println("Start of Masternode")
 		kademliaNode = labCode.NewMasterKademliaNode()
-		go kademliaNode.Listen("master", 8050)
+		go kademliaNode.Listen("master", 8051)
 		fmt.Println("End of node")
 	} else {
 		fmt.Println("Start of node")
 		nodeAddress := os.Getenv("HOSTNAME")
-		kademliaNode = labCode.NewKademliaNode(nodeAddress + ":8050")
+		kademliaNode = labCode.NewKademliaNode(nodeAddress + ":8051")
 		fmt.Println("After Creation")
 
 		masterNodeId := labCode.NewKademliaID("masterNode")
@@ -29,7 +29,7 @@ func main() {
 		kademliaNode.RoutingTable.AddContact(masterContact)
 		fmt.Println("After addcontact Master")
 
-		go kademliaNode.Listen(nodeAddress, 8050)
+		go kademliaNode.Listen(nodeAddress, 8051)
 		fmt.Println("After Listen")
 
 		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
