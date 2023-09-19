@@ -15,7 +15,7 @@ func main() {
 		nodeAddress := os.Getenv("HOSTNAME")
 		kademliaNode = labCode.NewKademliaNode(nodeAddress)
 
-		masterNodeId := labCode.NewKademliaID("masterNodeTest")
+		masterNodeId := labCode.NewKademliaID("masterNode")
 		masterNodeAddress := "master"
 		masterContact := labCode.NewContact(masterNodeId, masterNodeAddress)
 
