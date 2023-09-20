@@ -47,12 +47,6 @@ func NewMasterKademliaNode() Kademlia {
 	returnFindChan := make(chan []Contact)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &lookupChan, &findChan, &returnFindChan)
-	fmt.Println("bucket chan: ", bucketChan)
-	fmt.Println("lookup chan: ", lookupChan)
-	fmt.Println("find chan: ", findChan)
-	fmt.Println("returnfind chan: ", returnFindChan)
-	fmt.Println("rt: ", routingTable)
-	fmt.Println("network: ", network)
 	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
 }
 
@@ -77,10 +71,6 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 
 		transmitObj := TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload}
 
-		if *shortlist[i].ID == *kademlia.RoutingTable.Me.ID {
-			fmt.Println("in found myself in shortlist lookup contact")
-		}
-		fmt.Println("Outside if in lookup contact")
 		kademlia.Network.sendMessage(&transmitObj, &shortlist[i])
 
 	}

@@ -17,6 +17,9 @@ type Network struct {
 	ReturnFindChan *chan []Contact // For returning closest contacts to a contact
 }
 
+type GenericDataInterface interface {
+}
+
 func NewNetwork(me Contact, bucketChan *chan Contact, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact) Network {
 	return Network{Me: me, BucketChan: bucketChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan}
 }
@@ -103,7 +106,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 
 }
 
-func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
+func decodeTransmitObj(obj TransmitObj, objType string) GenericDataInterface {
 	objMap, ok := obj.Data.(map[string]interface{})
 
 	if ok != true {
