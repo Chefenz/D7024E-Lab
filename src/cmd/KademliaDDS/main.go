@@ -13,8 +13,8 @@ func main() {
 	var kademliaNode labCode.Kademlia
 	if containerName == "master" {
 		kademliaNode = labCode.NewMasterKademliaNode()
-		fmt.Println(kademliaNode)
-		fmt.Println(kademliaNode.Network)
+		fmt.Println("node: ", kademliaNode)
+		fmt.Println("network: ", kademliaNode.Network)
 		time.Sleep(time.Second * 5)
 		go kademliaNode.Network.Listen("master", 8051)
 		go kademliaNode.RoutingTable.UpdateBucketRoutine()
