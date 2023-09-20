@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"kademlia-app/labCode"
 	"os"
+	"time"
 )
 
 func main() {
@@ -12,9 +12,7 @@ func main() {
 	var kademliaNode labCode.Kademlia
 	if containerName == "master" {
 		kademliaNode = labCode.NewMasterKademliaNode()
-		if kademliaNode.Network.LookupChan != nil {
-			fmt.Println("channel is not nil")
-		}
+		time.Sleep(time.Second * 5)
 		go kademliaNode.RoutingTable.UpdateBucketRoutine()
 		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
 		go kademliaNode.LookupContactRoutine()
