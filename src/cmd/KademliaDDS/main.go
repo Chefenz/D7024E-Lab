@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"kademlia-app/labCode"
 	"os"
 	"time"
@@ -12,11 +13,14 @@ func main() {
 	var kademliaNode labCode.Kademlia
 	if containerName == "master" {
 		kademliaNode = labCode.NewMasterKademliaNode()
+		fmt.Println(kademliaNode)
+		fmt.Println(kademliaNode.Network)
 		time.Sleep(time.Second * 5)
+		go kademliaNode.Network.Listen("master", 8051)
 		go kademliaNode.RoutingTable.UpdateBucketRoutine()
 		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
 		go kademliaNode.LookupContactRoutine()
-		go kademliaNode.Network.Listen("master", 8051)
+
 	} else {
 		nodeAddress := os.Getenv("HOSTNAME")
 		kademliaNode = labCode.NewKademliaNode(nodeAddress + ":8051")
@@ -27,10 +31,10 @@ func main() {
 
 		kademliaNode.RoutingTable.AddContact(masterContact)
 
+		go kademliaNode.Network.Listen(nodeAddress, 8051)
 		go kademliaNode.RoutingTable.UpdateBucketRoutine()
 		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
 		go kademliaNode.LookupContactRoutine()
-		go kademliaNode.Network.Listen(nodeAddress, 8051)
 
 		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
 

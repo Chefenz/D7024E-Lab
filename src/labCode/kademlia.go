@@ -36,6 +36,12 @@ func NewKademliaNode(ip string) Kademlia {
 	returnFindChan := make(chan []Contact)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &lookupChan, &findChan, &returnFindChan)
+	fmt.Println(bucketChan)
+	fmt.Println(lookupChan)
+	fmt.Println(findChan)
+	fmt.Println(returnFindChan)
+	fmt.Println(routingTable)
+	fmt.Println(network)
 	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
 }
 
