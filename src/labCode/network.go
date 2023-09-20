@@ -18,7 +18,7 @@ type Network struct {
 }
 
 func NewNetwork(me Contact, bucketChan *chan Contact, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact) Network {
-	return Network{Me: me, BucketChan: bucketChan, FindChan: findChan, ReturnFindChan: returnFindChan}
+	return Network{Me: me, BucketChan: bucketChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan}
 }
 
 func (network *Network) Listen(ip string, port int) {
