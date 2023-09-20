@@ -1,21 +1,29 @@
 package labCode
 
+import "fmt"
+
 const bucketSize = 20
 
 // RoutingTable definition
 // keeps a refrence contact of me and an array of buckets
 type RoutingTable struct {
-	Me      Contact
-	buckets [IDLength * 8]*bucket
+	Me             Contact
+	buckets        [IDLength * 8]*bucket
+	BucketChan     *chan Contact
+	FindChan       *chan Contact
+	ReturnFindChan *chan []Contact
 }
 
 // NewRoutingTable returns a new instance of a RoutingTable
-func NewRoutingTable(me Contact) *RoutingTable {
+func NewRoutingTable(me Contact, bucketChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact) *RoutingTable {
 	routingTable := &RoutingTable{}
 	for i := 0; i < IDLength*8; i++ {
 		routingTable.buckets[i] = newBucket()
 	}
 	routingTable.Me = me
+	routingTable.BucketChan = bucketChan
+	routingTable.FindChan = findChan
+	routingTable.ReturnFindChan = returnFindChan
 	return routingTable
 }
 
@@ -66,4 +74,21 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 	}
 
 	return IDLength*8 - 1
+}
+
+func (routingTable *RoutingTable) UpdateBucketRoutine() {
+	contact := <-*routingTable.BucketChan
+
+	routingTable.AddContact(contact)
+
+	fmt.Println("node has been updated in bucket")
+
+}
+
+func (routingTable *RoutingTable) FindClosestContactsRoutine() {
+	target := <-*routingTable.FindChan
+
+	closestContacts := routingTable.FindClosestContacts(target.ID, alpha)
+
+	*routingTable.ReturnFindChan <- closestContacts
 }

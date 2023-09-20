@@ -1,20 +1,15 @@
 package labCode
 
 import (
-	"encoding/json"
 	"fmt"
-	"net"
-	"strconv"
 	"time"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 const alpha = 3
 
 type Kademlia struct {
 	RoutingTable *RoutingTable
-	network      Network
+	Network      Network
 	data         map[KademliaID][]byte
 }
 
@@ -35,16 +30,24 @@ type ReturnFindContactPayload struct {
 
 func NewKademliaNode(ip string) Kademlia {
 	id := NewRandomKademliaID()
-	routingTable := NewRoutingTable(NewContact(id, ip))
-	network := NewNetwork()
+	bucketChan := make(chan Contact, 1)
+	lookupChan := make(chan Contact)
+	findChan := make(chan Contact)
+	returnFindChan := make(chan []Contact)
+	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &findChan, &returnFindChan)
+	network := NewNetwork(routingTable.Me, &bucketChan, &lookupChan, &findChan, &returnFindChan)
 	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
 }
 
 func NewMasterKademliaNode() Kademlia {
 	id := NewKademliaID("masterNode")
-	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"))
-	network := NewNetwork()
-	return Kademlia{routingTable, network, map[KademliaID][]byte{}}
+	bucketChan := make(chan Contact, 1)
+	lookupChan := make(chan Contact)
+	findChan := make(chan Contact)
+	returnFindChan := make(chan []Contact)
+	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &findChan, &returnFindChan)
+	network := NewNetwork(routingTable.Me, &bucketChan, &lookupChan, &findChan, &returnFindChan)
+	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
 }
 
 func chk(err error) {
@@ -53,156 +56,10 @@ func chk(err error) {
 	}
 }
 
-func (kademlia *Kademlia) Listen(ip string, port int) {
-
-	for newPort := port; newPort <= port+50; newPort++ {
-
-		udpAddr, err := net.ResolveUDPAddr("udp", ip+":"+strconv.Itoa(newPort))
-		chk(err)
-		conn, err := net.ListenUDP("udp", udpAddr)
-		chk(err)
-
-		fmt.Println("Listening to: ", udpAddr)
-
-		defer conn.Close()
-
-		buffer := make([]byte, 4096)
-
-		for {
-			n, err := conn.Read(buffer)
-			if err != nil {
-				fmt.Println("Error reading from UDP connection:", err)
-				continue
-			}
-			if len(buffer) > 0 {
-				data := make([]byte, n)
-				copy(data, buffer[:n])
-
-				go kademlia.handleRPC(data, conn)
-			}
-		}
-	}
-}
-
-func (kademlia *Kademlia) handleRPC(data []byte, conn *net.UDPConn) {
-
-	var transmitObj TransmitObj
-
-	err := json.Unmarshal(data, &transmitObj)
-	chk(err)
-
-	fmt.Println("Handling RPC: ", transmitObj.Message)
-
-	switch transmitObj.Message {
-	case "PING":
-		fmt.Println("Returning message: ", "PONG")
-
-		Contact := DataToContact(transmitObj)
-		transmitObj := TransmitObj{Message: "PONG", Data: kademlia.RoutingTable.Me}
-		kademlia.sendMessage(&transmitObj, Contact)
-	case "PONG":
-
-		Contact := DataToContact(transmitObj)
-
-		fmt.Println("Received PONG response from", Contact.Address)
-		bucketIndex := kademlia.RoutingTable.getBucketIndex(Contact.ID)
-		bucket := kademlia.RoutingTable.buckets[bucketIndex]
-		bucket.AddContact(*Contact)
-		fmt.Println("node has been updated in bucket")
-	case "HEARTBEAT":
-
-		Contact := DataToContact(transmitObj)
-
-		bucketIndex := kademlia.RoutingTable.getBucketIndex(Contact.ID)
-		bucket := kademlia.RoutingTable.buckets[bucketIndex]
-		bucket.AddContact(*Contact)
-		fmt.Println("node has been updated in bucket")
-	case "FIND_CONTACT":
-
-		findContactPayloadMap, ok := transmitObj.Data.(map[string]interface{})
-
-		if ok != true {
-			fmt.Println("Data is not a Map")
-		}
-
-		var findContactPayload *FindContactPayload
-		err := mapstructure.Decode(findContactPayloadMap, &findContactPayload)
-		chk(err)
-
-		if *findContactPayload.Sender.ID != *kademlia.RoutingTable.Me.ID {
-			kademlia.RoutingTable.AddContact(findContactPayload.Sender)
-		}
-		closestContacts := kademlia.RoutingTable.FindClosestContacts(findContactPayload.Target.ID, alpha)
-
-		returnFindContactPayload := ReturnFindContactPayload{Shortlist: closestContacts, Target: findContactPayload.Target}
-
-		transmitObj := TransmitObj{Message: "RETURN_FIND_CONTACT", Data: returnFindContactPayload}
-
-		kademlia.sendMessage(&transmitObj, &findContactPayload.Sender)
-
-	case "RETURN_FIND_CONTACT":
-
-		returnFindContactPayloadMap, ok := transmitObj.Data.(map[string]interface{})
-
-		if ok != true {
-			fmt.Println("Data is not a Map")
-		}
-
-		var returnFindContactPayload *ReturnFindContactPayload
-		err := mapstructure.Decode(returnFindContactPayloadMap, &returnFindContactPayload)
-		chk(err)
-
-		shortlist := returnFindContactPayload.Shortlist
-		target := returnFindContactPayload.Target
-		foundTarget := false
-
-		for i := 0; i < len(shortlist); i++ {
-			if *shortlist[i].ID != *kademlia.RoutingTable.Me.ID {
-
-				kademlia.RoutingTable.AddContact(shortlist[0])
-			}
-
-			if *shortlist[i].ID == *target.ID {
-				foundTarget = true
-				fmt.Println("Found The Target Node :)")
-			}
-		}
-		if foundTarget == false {
-			fmt.Println("Did Not Find The Target Node Will Try Again")
-			kademlia.LookupContact(&target)
-
-		}
-
-	case "FIND_DATA":
-		fmt.Println("This should handle finddata")
-	case "STORE":
-		fmt.Println("This should handle store")
-	}
-
-}
-
-func DataToContact(obj TransmitObj) (contact *Contact) {
-	contactMap, ok := obj.Data.(map[string]interface{})
-
-	if ok != true {
-		fmt.Println("Data is not a Map")
-	}
-
-	err := mapstructure.Decode(contactMap, &contact)
-	chk(err)
-
-	return contact
-}
-
 func (kademlia *Kademlia) Ping(contact *Contact) {
-
 	//fmt.Println("sending ping to addr:", contact.Address)
 	transmitObj := TransmitObj{Message: "PING", Data: kademlia.RoutingTable.Me}
-	kademlia.sendMessage(&transmitObj, contact)
-}
-
-func (kademlia *Kademlia) startListen() {
-	kademlia.Listen(kademlia.RoutingTable.Me.Address, 8050)
+	kademlia.Network.sendMessage(&transmitObj, contact)
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {
@@ -218,9 +75,8 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 			fmt.Println("in found myself in shortlist lookup contact")
 		}
 		fmt.Println("Outside if in lookup contact")
-		kademlia.sendMessage(&transmitObj, &shortlist[i])
+		kademlia.Network.sendMessage(&transmitObj, &shortlist[i])
 
-		//kademlia.routingTable.AddContact(shortList[0]) lägg till contact från svar av SendFindContactMessage
 	}
 }
 
@@ -243,45 +99,9 @@ func (kademlia *Kademlia) SendHeartbeatMessage() {
 			for k := 0; k < len(contacts); k++ {
 				contact := contacts[k]
 				transmitObj := TransmitObj{Message: "HEARTBEAT", Data: kademlia.RoutingTable.Me}
-				kademlia.sendMessage(&transmitObj, &contact)
+				kademlia.Network.sendMessage(&transmitObj, &contact)
 
 			}
-		}
-	}
-
-}
-
-func (kademlia *Kademlia) sendMessage(transmitObj *TransmitObj, contact *Contact) {
-
-	targetAddr, err := net.ResolveUDPAddr("udp", contact.Address)
-	chk(err)
-
-	conn, err := net.DialUDP("udp", nil, targetAddr)
-	chk(err)
-
-	// Marshal the struct into JSON
-	sendJSON, err := json.Marshal(transmitObj)
-	chk(err)
-
-	_, err = conn.Write(sendJSON)
-	chk(err)
-
-	conn.Close()
-
-}
-
-func (kademlia *Kademlia) Run(nodeType string) {
-	if nodeType == "master" {
-		node := NewKademliaNode(":8050")
-		go node.Listen("", 8050)
-		for {
-
-		}
-	} else {
-		node := NewKademliaNode(":8051")
-		go node.Listen("", 8051)
-		for {
-
 		}
 	}
 
@@ -310,18 +130,8 @@ func (kademlia *Kademlia) HeartbeatSignal() {
 	}
 }
 
-/*
-func (kademlia *Kademlia) JoinNetwork() {
-	node := NewKademliaNode()
-	network := Network{}
+func (kademlia *Kademlia) LookupContactRoutine() {
+	target := <-*kademlia.Network.LookupChan
 
-	masterNodeId := NewKademliaID("masterNode")
-	masterNodeAddress := "master"
-	masterContact := NewContact(masterNodeId, masterNodeAddress)
-
-	node.RoutingTable.AddContact(NewContact(&masterID, masterIP))
-	//node.LookupContact()
-	kademlia.network = network
+	kademlia.LookupContact(&target)
 }
-
-*/
