@@ -120,7 +120,6 @@ func (kademlia *Kademlia) LookupData(hash string) {
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
-	wow := data
 	strData := string(data)
 	newDataId := NewKademliaDataID(strData)
 
@@ -128,7 +127,10 @@ func (kademlia *Kademlia) Store(data []byte) {
 	var wg sync.WaitGroup
 	wg.Add(len(closestContactsLst))
 
-	storePayload := StorePayload{Key: newDataId, Wg: &wg, Data: wow}
+	storePayload := StorePayload{Key: newDataId, Wg: &wg, Data: data}
+	fmt.Println("The StorePayload:", storePayload)
+	fmt.Println("The data in the Data field:", data)
+	fmt.Println("The type of the data:", reflect.TypeOf(data))
 	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload}
 
 	for i := 0; i < len(closestContactsLst); i++ {
