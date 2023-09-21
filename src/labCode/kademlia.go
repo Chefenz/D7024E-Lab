@@ -210,7 +210,7 @@ func (Kademlia *Kademlia) DataStorageManager() {
 
 			write.Resp <- true
 		default:
-			fmt.Println("In DataStoreManager default")
+			//No write or read request has been issued
 			continue
 		}
 	}
