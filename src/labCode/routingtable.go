@@ -78,24 +78,37 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 	return IDLength*8 - 1
 }
 
-func (routingTable *RoutingTable) UpdateBucketRoutine() {
+func (routingTable *RoutingTable) UpdateBucketRoutine(stopChan <-chan string) {
+
 	for {
-		contact := <-*routingTable.BucketChan
+		select {
+		case <-stopChan:
+			fmt.Println("Stopping bucket routine...")
+			return
+		default:
+			contact := <-*routingTable.BucketChan
 
-		routingTable.AddContact(contact)
+			routingTable.AddContact(contact)
 
-		fmt.Println("Sender contact has been updated in bucket")
-		*routingTable.BucketWaitChan <- true
+			fmt.Println("Sender contact has been updated in bucket")
+			*routingTable.BucketWaitChan <- true
+		}
 	}
 
 }
 
-func (routingTable *RoutingTable) FindClosestContactsRoutine() {
+func (routingTable *RoutingTable) FindClosestContactsRoutine(stopChan <-chan string) {
 	for {
-		target := <-*routingTable.FindChan
+		select {
+		case <-stopChan:
+			fmt.Println("Stopping find closest contacts routine...")
+			return
+		default:
+			target := <-*routingTable.FindChan
 
-		closestContacts := routingTable.FindClosestContacts(target.ID, alpha)
+			closestContacts := routingTable.FindClosestContacts(target.ID, alpha)
 
-		*routingTable.ReturnFindChan <- closestContacts
+			*routingTable.ReturnFindChan <- closestContacts
+		}
 	}
 }

@@ -22,22 +22,28 @@ func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool,
 	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan}
 }
 
-func (network *Network) Listen(ip string, port int) {
-	for newPort := port; newPort <= port+50; newPort++ {
+func (network *Network) Listen(ip string, port int, stopChan chan string) {
 
-		udpAddr, err := net.ResolveUDPAddr("udp", ip+":"+strconv.Itoa(newPort))
-		chk(err)
-		conn, err := net.ListenUDP("udp", udpAddr)
-		chk(err)
+	udpAddr, err := net.ResolveUDPAddr("udp", ip+":"+strconv.Itoa(port))
+	chk(err)
+	conn, err := net.ListenUDP("udp", udpAddr)
+	chk(err)
 
-		fmt.Println("Listening to: ", udpAddr)
+	fmt.Println("Listening to: ", udpAddr)
 
-		defer conn.Close()
+	defer conn.Close()
 
-		buffer := make([]byte, 4096)
+	buffer := make([]byte, 4096)
 
-		for {
+	for {
+		select {
+		case <-stopChan:
+			fmt.Println("Stopping listen..")
+			return
+		default:
+			fmt.Println("in listen")
 			n, err := conn.Read(buffer)
+			fmt.Println("after read")
 			if err != nil {
 				fmt.Println("Error reading from UDP connection:", err)
 				continue
@@ -46,13 +52,13 @@ func (network *Network) Listen(ip string, port int) {
 				data := make([]byte, n)
 				copy(data, buffer[:n])
 
-				go network.handleRPC(data, conn)
+				go network.handleRPC(data)
 			}
 		}
 	}
 }
 
-func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
+func (network *Network) handleRPC(data []byte) {
 
 	// Unmarshal transfer data
 	var transmitObj TransmitObj
@@ -105,6 +111,9 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		fmt.Println("This should handle finddata")
 	case "STORE":
 		fmt.Println("This should handle store")
+	default:
+		fmt.Println("in default")
+		return
 	}
 
 }

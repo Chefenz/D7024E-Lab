@@ -11,6 +11,7 @@ type Kademlia struct {
 	RoutingTable *RoutingTable
 	Network      Network
 	data         map[KademliaID][]byte
+	StopChan     *chan string
 }
 
 type TransmitObj struct {
@@ -35,9 +36,10 @@ func NewKademliaNode(ip string) Kademlia {
 	lookupChan := make(chan Contact)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
+	stopChan := make(chan string)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
-	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
+	return Kademlia{routingTable, network, make(map[KademliaID][]byte), &stopChan}
 }
 
 func NewMasterKademliaNode() Kademlia {
@@ -47,9 +49,10 @@ func NewMasterKademliaNode() Kademlia {
 	lookupChan := make(chan Contact)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
+	stopChan := make(chan string)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
-	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
+	return Kademlia{routingTable, network, make(map[KademliaID][]byte), &stopChan}
 }
 
 func chk(err error) {
@@ -105,7 +108,7 @@ func (kademlia *Kademlia) SendHeartbeatMessage() {
 
 }
 
-func (kademlia *Kademlia) HeartbeatSignal() {
+func (kademlia *Kademlia) HeartbeatSignal(stopChan <-chan string) {
 	heartbeat := make(chan bool)
 
 	// Start a goroutine to send heartbeat signals at a regular interval.
@@ -122,16 +125,32 @@ func (kademlia *Kademlia) HeartbeatSignal() {
 		case <-heartbeat:
 			fmt.Println("Heartbeat")
 			kademlia.SendHeartbeatMessage()
+		case <-stopChan:
+
 		default:
 			// No heartbeat received.
 		}
 	}
 }
 
-func (kademlia *Kademlia) LookupContactRoutine() {
+func (kademlia *Kademlia) LookupContactRoutine(stopChan <-chan string) {
 	for {
-		target := <-*kademlia.Network.LookupChan
+		select {
+		case <-stopChan:
+			fmt.Println("Stopping look up contact routine...")
+			return
+		default:
+			target := <-*kademlia.Network.LookupChan
 
-		kademlia.LookupContact(&target)
+			kademlia.LookupContact(&target)
+		}
 	}
+}
+
+func (kademlia *Kademlia) StopAllRoutines() {
+	/*for i := 0; i < 4; i++ {
+		*kademlia.StopChan <- "Stop"
+	}*/
+	close(*kademlia.StopChan)
+
 }

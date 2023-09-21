@@ -11,12 +11,12 @@ func main() {
 	var kademliaNode labCode.Kademlia
 	if containerName == "master" {
 		kademliaNode = labCode.NewMasterKademliaNode()
-		go kademliaNode.Network.Listen("master", 8051)
-		go kademliaNode.RoutingTable.UpdateBucketRoutine()
-		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
-		go kademliaNode.LookupContactRoutine()
+		go kademliaNode.Network.Listen("master", 8051, *kademliaNode.StopChan)
+		go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
+		go kademliaNode.RoutingTable.FindClosestContactsRoutine(*kademliaNode.StopChan)
+		go kademliaNode.LookupContactRoutine(*kademliaNode.StopChan)
 
-		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.HeartbeatSignal(*kademliaNode.StopChan)
 
 	} else {
 		nodeAddress := os.Getenv("HOSTNAME")
@@ -28,14 +28,14 @@ func main() {
 
 		kademliaNode.RoutingTable.AddContact(masterContact)
 
-		go kademliaNode.Network.Listen(nodeAddress, 8051)
-		go kademliaNode.RoutingTable.UpdateBucketRoutine()
-		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
-		go kademliaNode.LookupContactRoutine()
+		go kademliaNode.Network.Listen(nodeAddress, 8051, *kademliaNode.StopChan)
+		go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
+		go kademliaNode.RoutingTable.FindClosestContactsRoutine(*kademliaNode.StopChan)
+		go kademliaNode.LookupContactRoutine(*kademliaNode.StopChan)
 
 		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
 
-		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.HeartbeatSignal(*kademliaNode.StopChan)
 
 	}
 
