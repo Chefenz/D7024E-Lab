@@ -82,11 +82,9 @@ func (routingTable *RoutingTable) UpdateBucketRoutine() {
 	for {
 		contact := <-*routingTable.BucketChan
 
-		fmt.Println("recieved contact to update: ", contact)
-
 		routingTable.AddContact(contact)
 
-		fmt.Println("node has been updated in bucket")
+		fmt.Println("Sender contact has been updated in bucket")
 		*routingTable.BucketWaitChan <- true
 	}
 
