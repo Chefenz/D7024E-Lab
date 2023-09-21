@@ -18,10 +18,11 @@ type Network struct {
 	ReturnFindChan *chan []Contact      // For returning closest contacts to a contact
 	DataReadChan   *chan ReadOperation  //For sending read requests to the data storage
 	DataWriteChan  *chan WriteOperation //For sending write requests to the data storage
+	CLIChan        *chan string
 }
 
-func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation) Network {
-	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan}
+func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string) Network {
+	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan}
 }
 
 func (network *Network) Listen(ip string, port int) {
@@ -123,9 +124,8 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 	case "RETURN_STORE":
 		returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
 
-		//Tell the waitgroup that it is done and wait for all the other store ndn retutn store to come trough
-		fmt.Println("In return store after wait", returnStorePayload.Key.String())
-
+		key := returnStorePayload.Key
+		*network.CLIChan <- key.String()
 	}
 }
 

@@ -9,8 +9,9 @@ func main() {
 	containerName := os.Getenv("CONTAINER_NAME")
 
 	var kademliaNode labCode.Kademlia
+	var CLINetworkChan *chan string
 	if containerName == "master" {
-		kademliaNode = labCode.NewMasterKademliaNode()
+		kademliaNode, CLINetworkChan = labCode.NewMasterKademliaNode()
 		go kademliaNode.Network.Listen("master", 8051)
 		go kademliaNode.RoutingTable.UpdateBucketRoutine()
 		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
@@ -21,7 +22,7 @@ func main() {
 
 	} else {
 		nodeAddress := os.Getenv("HOSTNAME")
-		kademliaNode = labCode.NewKademliaNode(nodeAddress + ":8051")
+		kademliaNode, CLINetworkChan = labCode.NewKademliaNode(nodeAddress + ":8051")
 
 		masterNodeId := labCode.NewMasterKademliaID()
 		masterNodeAddress := "master:8051"
@@ -41,6 +42,7 @@ func main() {
 
 	}
 
-	labCode.RunCLI(kademliaNode)
+	CLI := labCode.NewCli(kademliaNode, CLINetworkChan)
+	CLI.RunCLI()
 
 }

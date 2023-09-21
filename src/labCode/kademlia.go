@@ -58,7 +58,7 @@ type WriteOperation struct {
 	Resp chan bool
 }
 
-func NewKademliaNode(ip string) Kademlia {
+func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	id := NewRandomKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
@@ -67,12 +67,13 @@ func NewKademliaNode(ip string) Kademlia {
 	returnFindChan := make(chan []Contact)
 	dataReadChan := make(chan ReadOperation)
 	dataWriteChan := make(chan WriteOperation)
+	CLIChan := make(chan string)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan)
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan}, &CLIChan
 }
 
-func NewMasterKademliaNode() Kademlia {
+func NewMasterKademliaNode() (Kademlia, *chan string) {
 	id := NewMasterKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
@@ -81,9 +82,10 @@ func NewMasterKademliaNode() Kademlia {
 	returnFindChan := make(chan []Contact)
 	dataReadChan := make(chan ReadOperation)
 	dataWriteChan := make(chan WriteOperation)
+	CLIChan := make(chan string)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan)
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan}, &CLIChan
 }
 
 func chk(err error) {

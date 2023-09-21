@@ -27,7 +27,16 @@ const (
 		"or more information about a specific command"
 )
 
-func RunCLI(kademliaNode Kademlia) {
+type CLI struct {
+	KademliaNode   Kademlia
+	CLINetworkChan *chan string
+}
+
+func NewCli(kademliaNode Kademlia, CLIChan *chan string) CLI {
+	return CLI{KademliaNode: kademliaNode, CLINetworkChan: CLIChan}
+}
+
+func (cli *CLI) RunCLI() {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
@@ -42,7 +51,7 @@ func RunCLI(kademliaNode Kademlia) {
 			continue
 		}
 
-		command, args, err := parseInput(userInput)
+		command, args, err := cli.parseInput(userInput)
 		if err != nil {
 			fmt.Println("Unexpected Error: ", err)
 			os.Exit(1)
@@ -50,34 +59,34 @@ func RunCLI(kademliaNode Kademlia) {
 
 		switch command {
 		case "put":
-			response, err := handlePutCommand(args, kademliaNode)
+			response, err := cli.handlePutCommand(args)
 			if err != nil {
-				printToTerminal(err.Error())
+				cli.printToTerminal(err.Error())
 				break
 			}
-			printToTerminal(response)
+			cli.printToTerminal(response)
 		case "get":
-			response, err := handleGetCommand(args, kademliaNode)
+			response, err := cli.handleGetCommand(args)
 			if err != nil {
-				printToTerminal(err.Error())
+				cli.printToTerminal(err.Error())
 				break
 			}
-			printToTerminal(response)
+			cli.printToTerminal(response)
 		case "exit":
-			printToTerminal(ShuttingDownNodeMsg)
+			cli.printToTerminal(ShuttingDownNodeMsg)
 			os.Exit(0)
 		case "help":
-			response := handleHelpCommand(args)
-			printToTerminal(response)
+			response := cli.handleHelpCommand(args)
+			cli.printToTerminal(response)
 		default:
-			printToTerminal(UnknownCommandMsg + "<" + command + "> " + UseHelpToViewCommandsMsg)
+			cli.printToTerminal(UnknownCommandMsg + "<" + command + "> " + UseHelpToViewCommandsMsg)
 		}
 
 	}
 
 }
 
-func parseInput(userInput string) (string, []string, error) {
+func (cli *CLI) parseInput(userInput string) (string, []string, error) {
 	if userInput == "" {
 		return "", nil, errors.New("empty string")
 	}
@@ -87,7 +96,7 @@ func parseInput(userInput string) (string, []string, error) {
 	return command, args[1:], nil
 }
 
-func handlePutCommand(args []string, kademliaNode Kademlia) (string, error) {
+func (cli *CLI) handlePutCommand(args []string) (string, error) {
 	if len(args) == 0 {
 		return "", errors.New(InvalidArgsForPutCommandMsg + PutCommandUsageMsg)
 
@@ -95,15 +104,17 @@ func handlePutCommand(args []string, kademliaNode Kademlia) (string, error) {
 
 	dataStr := strings.Join(args, " ")
 	dataByte := []byte(dataStr)
+	fmt.Println(dataByte)
 	fmt.Println("Before Store")
-	kademliaNode.Store(dataByte)
+	cli.KademliaNode.Store(dataByte)
+	result := <-*cli.CLINetworkChan
 	fmt.Println("After Store")
 
-	return "tempstr", nil
+	return result, nil
 
 }
 
-func handleGetCommand(args []string, kademliaNode Kademlia) (string, error) {
+func (cli *CLI) handleGetCommand(args []string) (string, error) {
 	if len(args) == 0 || len(args) > 1 {
 		return "", errors.New(InvalidArgsForGetCommandMsg + GetCommandUsageMsg)
 
@@ -113,7 +124,7 @@ func handleGetCommand(args []string, kademliaNode Kademlia) (string, error) {
 	return "TEMPSTR", nil
 }
 
-func handleHelpCommand(args []string) string {
+func (cli *CLI) handleHelpCommand(args []string) string {
 	var rtnMsg string
 
 	if len(args) > 0 {
@@ -138,7 +149,7 @@ func handleHelpCommand(args []string) string {
 	return rtnMsg
 }
 
-func printToTerminal(str string) {
+func (cli *CLI) printToTerminal(str string) {
 	fmt.Println()
 	fmt.Println(str)
 	fmt.Println()
