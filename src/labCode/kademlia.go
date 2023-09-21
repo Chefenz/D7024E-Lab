@@ -198,6 +198,9 @@ func (Kademlia *Kademlia) DataStorageManager() {
 			newDataStorageObject := DataStorageObject{Data: data, Time: time.Now()}
 			Kademlia.DataStorage[key] = newDataStorageObject
 
+			fmt.Println("Map after store:", Kademlia.DataStorage)
+			fmt.Println("lenght of map", len(Kademlia.DataStorage))
+
 			write.Resp <- true
 		default:
 			//No write or read request has been issued

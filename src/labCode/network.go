@@ -124,7 +124,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
 
 		//Tell the waitgroup that it is done and wait for all the other store ndn retutn store to come trough
-		fmt.Println("In return store after wait", returnStorePayload)
+		fmt.Println("In return store after wait", returnStorePayload.Key.String())
 
 	}
 }
