@@ -164,6 +164,7 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 	case "StorePayload":
 		var storePayload *StorePayload
 		err := mapstructure.Decode(objMap, &storePayload)
+		fmt.Println("after storePayLoadDecode", &storePayload)
 		chk(err)
 		return storePayload
 
