@@ -110,7 +110,7 @@ func (cli *CLI) handlePutCommand(args []string) (string, error) {
 	result := <-*cli.CLINetworkChan
 	fmt.Println("After Store")
 
-	return result, nil
+	return "Store successful! Hash: " + result, nil
 
 }
 

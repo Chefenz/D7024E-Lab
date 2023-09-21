@@ -184,6 +184,8 @@ func (kademlia *Kademlia) LookupContactRoutine() {
 }
 
 func (Kademlia *Kademlia) DataStorageManager() {
+	//Create a ticker that ticks every 5 seconds
+	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case read := <-*Kademlia.DataReadChan:
@@ -205,6 +207,10 @@ func (Kademlia *Kademlia) DataStorageManager() {
 			fmt.Println("lenght of map", len(Kademlia.DataStorage))
 
 			write.Resp <- true
+
+		case <-ticker.C:
+			fmt.Println("in update dataStoreManager")
+
 		default:
 			//No write or read request has been issued
 		}
