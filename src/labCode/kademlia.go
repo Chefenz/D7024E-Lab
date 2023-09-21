@@ -120,6 +120,7 @@ func (kademlia *Kademlia) LookupData(hash string) {
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
+	fmt.Println("In store")
 	strData := string(data)
 	newDataId := NewKademliaDataID(strData)
 
