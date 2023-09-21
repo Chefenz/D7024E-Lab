@@ -17,6 +17,7 @@ func main() {
 		go kademliaNode.LookupContactRoutine()
 
 		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.DataStorageManager()
 
 	} else {
 		nodeAddress := os.Getenv("HOSTNAME")
@@ -36,6 +37,7 @@ func main() {
 		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
 
 		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.DataStorageManager()
 
 	}
 
