@@ -109,8 +109,9 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		sentFrom := transmitObj.Sender
 
 		key := findValuePayload.key
+		keyAsStr := key.String()
 
-		requestRead := ReadOperation{Key: key.String(), Resp: make(chan []byte)}
+		requestRead := ReadOperation{Key: keyAsStr, Resp: make(chan []byte)}
 		*network.DataReadChan <- requestRead
 
 		result := <-requestRead.Resp
