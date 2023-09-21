@@ -75,6 +75,9 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		<-*network.BucketWaitChan
 	case "HEARTBEAT":
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+		fmt.Println("Contact to add to bucket: ", contact)
+		fmt.Println("bucket chan len: ", len(*network.BucketChan))
+		fmt.Println("bucketwait chan len: ", len(*network.BucketWaitChan))
 		*network.BucketChan <- *contact
 		<-*network.BucketWaitChan
 	case "FIND_CONTACT":
