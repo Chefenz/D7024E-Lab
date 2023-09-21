@@ -132,9 +132,14 @@ func (kademlia *Kademlia) Store(data []byte) {
 	storePayload := StorePayload{Key: newDataId, Data: strData}
 	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload}
 
+	if len(closestContactsLst) == 0 {
+		*kademlia.Network.CLIChan <- ""
+	}
+
 	for i := 0; i < len(closestContactsLst); i++ {
 		kademlia.Network.sendMessage(&transmitObj, &closestContactsLst[i])
 	}
+
 }
 
 func (kademlia *Kademlia) SendHeartbeatMessage() {
@@ -216,6 +221,7 @@ func (Kademlia *Kademlia) DataStorageManager() {
 				insertedAt := value.Time
 				durationSinceInsert := time.Since(insertedAt)
 
+				//Delete all stored objects that has been stored for more than 1 minute
 				if durationSinceInsert > time.Minute {
 					delete(Kademlia.DataStorage, key)
 					fmt.Println("DATA OBJECT DELETED BECAUSE OF DECAY")
