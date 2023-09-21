@@ -125,7 +125,14 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
 
 		key := returnStorePayload.Key
-		*network.CLIChan <- key.String()
+		select {
+		case *network.CLIChan <- key.String():
+			fmt.Println("I WROTE")
+		default:
+			fmt.Println("I skipped")
+
+		}
+
 	}
 }
 
