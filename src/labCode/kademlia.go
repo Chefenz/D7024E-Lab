@@ -2,19 +2,29 @@ package labCode
 
 import (
 	"fmt"
+	"reflect"
+	"sync"
 	"time"
 )
 
 const alpha = 3
 
 type Kademlia struct {
-	RoutingTable *RoutingTable
-	Network      Network
-	data         map[KademliaID][]byte
+	RoutingTable  *RoutingTable
+	Network       Network
+	DataStorage   map[string]DataStorageObject
+	DataReadChan  *chan ReadOperation  //For sending read requests to the data storage
+	DataWriteChan *chan WriteOperation //For sending write requests to the data storage
+}
+
+type DataStorageObject struct {
+	Data []byte
+	Time time.Time
 }
 
 type TransmitObj struct {
 	Message string
+	Sender  Contact
 	Data    interface{}
 }
 
@@ -28,6 +38,33 @@ type ReturnFindContactPayload struct {
 	Target    Contact
 }
 
+type StorePayload struct {
+	Key                  *KademliaID
+	Wg                   *sync.WaitGroup
+	SuccessfullStoreChan chan bool
+	CLIChan              chan string
+	Data                 []byte
+}
+
+type ReturnStorePayload struct {
+	Key                  *KademliaID
+	Wg                   *sync.WaitGroup
+	SuccessfullStoreChan chan bool
+	CLICh                chan string
+}
+
+// Structs for read and write operations (move these to an appropriate place later)
+type ReadOperation struct {
+	Key  string
+	Resp chan []byte
+}
+
+type WriteOperation struct {
+	Key  string
+	Data []byte
+	Resp chan bool
+}
+
 func NewKademliaNode(ip string) Kademlia {
 	id := NewRandomKademliaID()
 	bucketChan := make(chan Contact, 1)
@@ -35,21 +72,25 @@ func NewKademliaNode(ip string) Kademlia {
 	lookupChan := make(chan Contact)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
+	dataReadChan := make(chan ReadOperation)
+	dataWriteChan := make(chan WriteOperation)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
-	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan)
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan}
 }
 
 func NewMasterKademliaNode() Kademlia {
-	id := NewKademliaID("masterNode")
+	id := NewMasterKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
 	lookupChan := make(chan Contact)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
+	dataReadChan := make(chan ReadOperation)
+	dataWriteChan := make(chan WriteOperation)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
-	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan)
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan}
 }
 
 func chk(err error) {
@@ -82,8 +123,22 @@ func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO
 }
 
-func (kademlia *Kademlia) Store(data []byte) {
-	// TODO
+func (kademlia *Kademlia) Store(data []byte, ch chan string) {
+	strData := string(data)
+	newDataId := NewKademliaDataID(strData)
+
+	closestContactsLst := kademlia.RoutingTable.FindClosestContacts(newDataId, alpha)
+	var wg sync.WaitGroup
+	wg.Add(len(closestContactsLst))
+
+	successfullStoreChan := make(chan bool)
+
+	storePayload := StorePayload{Key: newDataId, Wg: &wg, SuccessfullStoreChan: successfullStoreChan, CLIChan: ch, Data: data}
+	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload}
+
+	for i := 0; i < len(closestContactsLst); i++ {
+		kademlia.Network.sendMessage(&transmitObj, &closestContactsLst[i])
+	}
 }
 
 func (kademlia *Kademlia) SendHeartbeatMessage() {
@@ -133,5 +188,29 @@ func (kademlia *Kademlia) LookupContactRoutine() {
 		target := <-*kademlia.Network.LookupChan
 
 		kademlia.LookupContact(&target)
+	}
+}
+
+func (Kademlia *Kademlia) DataStorageManager() {
+	for {
+		select {
+		case read := <-*Kademlia.DataReadChan:
+			dataStorageObject := Kademlia.DataStorage[read.Key]
+			if reflect.TypeOf(dataStorageObject) == nil {
+				read.Resp <- nil
+			} else {
+				read.Resp <- dataStorageObject.Data
+			}
+		case write := <-*Kademlia.DataWriteChan:
+			key := write.Key
+			data := write.Data
+
+			newDataStorageObject := DataStorageObject{Data: data, Time: time.Now()}
+			Kademlia.DataStorage[key] = newDataStorageObject
+
+			write.Resp <- true
+		default:
+			panic("Error in DataStorageManager")
+		}
 	}
 }

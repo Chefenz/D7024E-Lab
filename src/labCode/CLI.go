@@ -93,8 +93,17 @@ func handlePutCommand(args []string, kademliaNode Kademlia) (string, error) {
 
 	}
 
-	//TODO - HANDLE THE ACTUAL STORING OF THE DATA
-	return "TEMPSTR", nil
+	dataStr := strings.Join(args, " ")
+	dataByte := []byte(dataStr)
+	ch := make(chan string)
+	kademliaNode.Store(dataByte, ch)
+	result := <-ch
+
+	if result == "" {
+		return "", errors.New("Could not store the given data")
+	}
+
+	return result, nil
 
 }
 

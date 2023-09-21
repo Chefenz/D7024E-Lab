@@ -11,15 +11,17 @@ import (
 
 type Network struct {
 	Me             Contact
-	BucketChan     *chan Contact   // For update bucket
-	BucketWaitChan *chan bool      // Wait for bucket update completion
-	LookupChan     *chan Contact   // For lookup of contact
-	FindChan       *chan Contact   // For find a contact
-	ReturnFindChan *chan []Contact // For returning closest contacts to a contact
+	BucketChan     *chan Contact        // For update bucket
+	BucketWaitChan *chan bool           // Wait for bucket update completion
+	LookupChan     *chan Contact        // For lookup of contact
+	FindChan       *chan Contact        // For find a contact
+	ReturnFindChan *chan []Contact      // For returning closest contacts to a contact
+	DataReadChan   *chan ReadOperation  //For sending read requests to the data storage
+	DataWriteChan  *chan WriteOperation //For sending write requests to the data storage
 }
 
-func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact) Network {
-	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan}
+func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation) Network {
+	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan}
 }
 
 func (network *Network) Listen(ip string, port int) {
@@ -104,9 +106,50 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 	case "FIND_DATA":
 		fmt.Println("This should handle finddata")
 	case "STORE":
-		fmt.Println("This should handle store")
-	}
+		storePayload := decodeTransmitObj(transmitObj, "StorePayload").(*StorePayload)
+		sentFrom := transmitObj.Sender
 
+		key := storePayload.Key
+		data := storePayload.Data
+		wg := storePayload.Wg
+		successfulStoreCh := storePayload.SuccessfullStoreChan
+		cLICh := storePayload.CLIChan
+
+		requestWrite := WriteOperation{Key: key.String(), Data: data, Resp: make(chan bool)}
+		*network.DataWriteChan <- requestWrite
+
+		couldStore := <-requestWrite.Resp
+
+		if couldStore {
+			successfulStoreCh <- true
+		}
+
+		returnStorePayload := ReturnStorePayload{Key: key, Wg: wg, SuccessfullStoreChan: successfulStoreCh, CLICh: cLICh}
+		transmitObj := TransmitObj{Message: "RETURN_STORE", Sender: network.Me, Data: returnStorePayload}
+		network.sendMessage(&transmitObj, &sentFrom)
+
+	case "RETURN_STORE":
+		returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*StorePayload)
+
+		key := returnStorePayload.Key
+		wg := returnStorePayload.Wg
+		cLICh := returnStorePayload.CLIChan
+		successfulStoreCh := returnStorePayload.SuccessfullStoreChan
+
+		//Tell the waitgroup that it is done and wait for all the other store ndn retutn store to come trough
+		wg.Done()
+		wg.Wait()
+
+		if <-successfulStoreCh {
+			keyAsStr := key.String()
+			cLICh <- keyAsStr
+		} else {
+			cLICh <- ""
+		}
+
+		close(cLICh)
+		close(successfulStoreCh)
+	}
 }
 
 func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
@@ -122,6 +165,7 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		err := mapstructure.Decode(objMap, &contact)
 		chk(err)
 		return contact
+
 	case "FindContactPayload":
 		var findContactPayload *FindContactPayload
 		err := mapstructure.Decode(objMap, &findContactPayload)
@@ -133,6 +177,19 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		err := mapstructure.Decode(objMap, &returnFindContactPayload)
 		chk(err)
 		return returnFindContactPayload
+
+	case "StorePayload":
+		var storePayload *StorePayload
+		err := mapstructure.Decode(objMap, &storePayload)
+		chk(err)
+		return storePayload
+
+	case "ReturnStorePayload":
+		var returnStorePayload *ReturnStorePayload
+		err := mapstructure.Decode(objMap, &returnStorePayload)
+		chk(err)
+		return returnStorePayload
+
 	}
 
 	return nil
