@@ -7,13 +7,15 @@ import (
 )
 
 const alpha = 3
+const dataDecayInterval = 10
 
 type Kademlia struct {
-	RoutingTable  *RoutingTable
-	Network       Network
-	DataStorage   map[string]DataStorageObject
-	DataReadChan  *chan ReadOperation  //For sending read requests to the data storage
-	DataWriteChan *chan WriteOperation //For sending write requests to the data storage
+	RoutingTable      *RoutingTable
+	Network           Network
+	DataStorage       map[string]DataStorageObject
+	DataReadChan      *chan ReadOperation  //For sending read requests to the data storage
+	DataWriteChan     *chan WriteOperation //For sending write requests to the data storage
+	dataManagerTicker *time.Ticker
 }
 
 type DataStorageObject struct {
@@ -68,9 +70,10 @@ func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	dataReadChan := make(chan ReadOperation)
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
+	dataManagerTicker := time.NewTicker(dataDecayInterval * time.Second)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan}, &CLIChan
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, dataManagerTicker}, &CLIChan
 }
 
 func NewMasterKademliaNode() (Kademlia, *chan string) {
@@ -83,9 +86,10 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	dataReadChan := make(chan ReadOperation)
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
+	dataManagerTicker := time.NewTicker(dataDecayInterval * time.Second)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan}, &CLIChan
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, dataManagerTicker}, &CLIChan
 }
 
 func chk(err error) {
@@ -185,7 +189,6 @@ func (kademlia *Kademlia) LookupContactRoutine() {
 
 func (Kademlia *Kademlia) DataStorageManager() {
 	//Create a ticker that ticks every 5 seconds
-	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case read := <-*Kademlia.DataReadChan:
@@ -208,7 +211,7 @@ func (Kademlia *Kademlia) DataStorageManager() {
 
 			write.Resp <- true
 
-		case <-ticker.C:
+		case <-Kademlia.dataManagerTicker.C:
 			fmt.Println("in update dataStoreManager")
 
 		default:
