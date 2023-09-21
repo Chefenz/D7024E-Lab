@@ -110,6 +110,8 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		fmt.Println("Data is not a Map")
 	}
 
+	fmt.Println("obj type is: ", objType)
+
 	switch objType {
 	case "Contact":
 		var contact *Contact
@@ -117,6 +119,7 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		chk(err)
 		return contact
 	case "FindObjPayload":
+		fmt.Println("is in here")
 		var findContactPayload *FindContactPayload
 		err := mapstructure.Decode(objMap, &findContactPayload)
 		chk(err)
