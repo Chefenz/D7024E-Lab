@@ -118,14 +118,14 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		err := mapstructure.Decode(objMap, &contact)
 		chk(err)
 		return contact
-	case "FindObjPayload":
+	case "FindContactPayload":
 		fmt.Println("is in here")
 		var findContactPayload *FindContactPayload
 		err := mapstructure.Decode(objMap, &findContactPayload)
 		chk(err)
 		return findContactPayload
 
-	case "ReturnFindObjPayload":
+	case "ReturnFindContactPayload":
 		var returnFindContactPayload *ReturnFindContactPayload
 		err := mapstructure.Decode(objMap, &returnFindContactPayload)
 		chk(err)
