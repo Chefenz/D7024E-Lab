@@ -10,18 +10,20 @@ type RoutingTable struct {
 	Me             Contact
 	buckets        [IDLength * 8]*bucket
 	BucketChan     *chan Contact
+	BucketWaitChan *chan bool
 	FindChan       *chan Contact
 	ReturnFindChan *chan []Contact
 }
 
 // NewRoutingTable returns a new instance of a RoutingTable
-func NewRoutingTable(me Contact, bucketChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact) *RoutingTable {
+func NewRoutingTable(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, findChan *chan Contact, returnFindChan *chan []Contact) *RoutingTable {
 	routingTable := &RoutingTable{}
 	for i := 0; i < IDLength*8; i++ {
 		routingTable.buckets[i] = newBucket()
 	}
 	routingTable.Me = me
 	routingTable.BucketChan = bucketChan
+	routingTable.BucketWaitChan = bucketWaitChan
 	routingTable.FindChan = findChan
 	routingTable.ReturnFindChan = returnFindChan
 	return routingTable
@@ -79,11 +81,12 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 func (routingTable *RoutingTable) UpdateBucketRoutine() {
 	contact := <-*routingTable.BucketChan
 
-	fmt.Println("recieved contact to update in bucket: ", contact)
+	fmt.Println("recieved contact to update: ", contact)
 
 	routingTable.AddContact(contact)
 
 	fmt.Println("node has been updated in bucket")
+	*routingTable.BucketWaitChan <- true
 
 }
 

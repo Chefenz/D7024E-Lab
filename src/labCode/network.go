@@ -12,13 +12,14 @@ import (
 type Network struct {
 	Me             Contact
 	BucketChan     *chan Contact   // For update bucket
+	BucketWaitChan *chan bool      // Wait for bucket update completion
 	LookupChan     *chan Contact   // For lookup of contact
 	FindChan       *chan Contact   // For find a contact
 	ReturnFindChan *chan []Contact // For returning closest contacts to a contact
 }
 
-func NewNetwork(me Contact, bucketChan *chan Contact, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact) Network {
-	return Network{Me: me, BucketChan: bucketChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan}
+func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact) Network {
+	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan}
 }
 
 func (network *Network) Listen(ip string, port int) {
@@ -64,19 +65,22 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 	case "PING":
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
 		*network.BucketChan <- *contact
+		<-*network.BucketWaitChan
 		transmitObj := TransmitObj{Message: "PONG", Data: network.Me}
 		network.sendMessage(&transmitObj, contact)
 	case "PONG":
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
 		*network.BucketChan <- *contact
+		<-*network.BucketWaitChan
 	case "HEARTBEAT":
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
 		fmt.Println(contact)
 		*network.BucketChan <- *contact
+		<-*network.BucketWaitChan
 	case "FIND_CONTACT":
 		findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
 		*network.BucketChan <- findContactPayload.Sender
-
+		<-*network.BucketWaitChan
 		// Lookup closest contacts over channels
 		*network.FindChan <- findContactPayload.Target
 		closestContacts := <-*network.ReturnFindChan

@@ -31,22 +31,24 @@ type ReturnFindContactPayload struct {
 func NewKademliaNode(ip string) Kademlia {
 	id := NewRandomKademliaID()
 	bucketChan := make(chan Contact, 1)
+	bucketWaitChan := make(chan bool)
 	lookupChan := make(chan Contact)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
-	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &lookupChan, &findChan, &returnFindChan)
+	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
 	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
 }
 
 func NewMasterKademliaNode() Kademlia {
 	id := NewKademliaID("masterNode")
 	bucketChan := make(chan Contact, 1)
+	bucketWaitChan := make(chan bool)
 	lookupChan := make(chan Contact)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
-	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &lookupChan, &findChan, &returnFindChan)
+	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
 	return Kademlia{routingTable, network, make(map[KademliaID][]byte)}
 }
 
