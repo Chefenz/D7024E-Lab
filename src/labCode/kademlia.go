@@ -129,7 +129,9 @@ func (kademlia *Kademlia) HeartbeatSignal() {
 }
 
 func (kademlia *Kademlia) LookupContactRoutine() {
-	target := <-*kademlia.Network.LookupChan
+	for {
+		target := <-*kademlia.Network.LookupChan
 
-	kademlia.LookupContact(&target)
+		kademlia.LookupContact(&target)
+	}
 }

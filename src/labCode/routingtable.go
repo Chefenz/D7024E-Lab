@@ -79,21 +79,25 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 }
 
 func (routingTable *RoutingTable) UpdateBucketRoutine() {
-	contact := <-*routingTable.BucketChan
+	for {
+		contact := <-*routingTable.BucketChan
 
-	fmt.Println("recieved contact to update: ", contact)
+		fmt.Println("recieved contact to update: ", contact)
 
-	routingTable.AddContact(contact)
+		routingTable.AddContact(contact)
 
-	fmt.Println("node has been updated in bucket")
-	*routingTable.BucketWaitChan <- true
+		fmt.Println("node has been updated in bucket")
+		*routingTable.BucketWaitChan <- true
+	}
 
 }
 
 func (routingTable *RoutingTable) FindClosestContactsRoutine() {
-	target := <-*routingTable.FindChan
+	for {
+		target := <-*routingTable.FindChan
 
-	closestContacts := routingTable.FindClosestContacts(target.ID, alpha)
+		closestContacts := routingTable.FindClosestContacts(target.ID, alpha)
 
-	*routingTable.ReturnFindChan <- closestContacts
+		*routingTable.ReturnFindChan <- closestContacts
+	}
 }
