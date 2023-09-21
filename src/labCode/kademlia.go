@@ -7,7 +7,7 @@ import (
 )
 
 const alpha = 3
-const dataDecayInterval = 10
+const dataDecayInterval = 7
 
 type Kademlia struct {
 	RoutingTable      *RoutingTable
@@ -212,7 +212,18 @@ func (Kademlia *Kademlia) DataStorageManager() {
 			write.Resp <- true
 
 		case <-Kademlia.dataManagerTicker.C:
-			fmt.Println("in update dataStoreManager")
+			for key, value := range Kademlia.DataStorage {
+				insertedAt := value.Time
+				durationSinceInsert := time.Since(insertedAt)
+
+				if durationSinceInsert > time.Minute {
+					delete(Kademlia.DataStorage, key)
+					fmt.Println("DATA OBJECT DELETED BECAUSE OF DECAY")
+					fmt.Println("lenght of map after deletion", len(Kademlia.DataStorage))
+
+				}
+
+			}
 
 		default:
 			//No write or read request has been issued
