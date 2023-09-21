@@ -39,9 +39,9 @@ type ReturnFindContactPayload struct {
 }
 
 type StorePayload struct {
-	Key  *KademliaID
-	Wg   *sync.WaitGroup
-	Data []byte
+	Key       *KademliaID
+	Wg        *sync.WaitGroup
+	DataBytes []byte
 }
 
 type ReturnStorePayload struct {
@@ -128,7 +128,7 @@ func (kademlia *Kademlia) Store(data []byte) {
 	var wg sync.WaitGroup
 	wg.Add(len(closestContactsLst))
 
-	storePayload := StorePayload{Key: newDataId, Wg: &wg, Data: data}
+	storePayload := StorePayload{Key: newDataId, Wg: &wg, DataBytes: data}
 	fmt.Println("The StorePayload:", storePayload)
 	fmt.Println("The data in the Data field:", data)
 	fmt.Println("The type of the data:", reflect.TypeOf(data))

@@ -110,7 +110,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		sentFrom := transmitObj.Sender
 
 		key := storePayload.Key
-		data := storePayload.Data
+		data := storePayload.DataBytes
 		wg := storePayload.Wg
 
 		requestWrite := WriteOperation{Key: key.String(), Data: data, Resp: make(chan bool)}
@@ -136,7 +136,6 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 
 func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 	objMap, ok := obj.Data.(map[string]interface{})
-	fmt.Println("Object data map:", objMap)
 
 	if ok != true {
 		fmt.Println("Data is not a Map")
@@ -164,7 +163,6 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 	case "StorePayload":
 		var storePayload *StorePayload
 		err := mapstructure.Decode(objMap, &storePayload)
-		fmt.Println("after storePayLoadDecode", storePayload)
 		chk(err)
 		return storePayload
 
