@@ -110,7 +110,9 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		sentFrom := transmitObj.Sender
 
 		key := storePayload.Key
-		data := storePayload.DataBytes
+		dataStr := storePayload.Data
+		data := []byte(dataStr)
+
 		wg := storePayload.Wg
 
 		requestWrite := WriteOperation{Key: key.String(), Data: data, Resp: make(chan bool)}
