@@ -60,6 +60,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 	chk(err)
 
 	fmt.Println("Handling RPC: ", transmitObj.Message)
+	fmt.Println("test change")
 
 	switch transmitObj.Message {
 	case "PING":
@@ -82,8 +83,12 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		<-*network.BucketWaitChan
 	case "FIND_CONTACT":
 		findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
+		fmt.Println("find contact bucket chan len pre: ", len(*network.BucketChan))
+		fmt.Println("find contact bucketwait chan len pre: ", len(*network.BucketWaitChan))
 		*network.BucketChan <- findContactPayload.Sender
 		<-*network.BucketWaitChan
+		fmt.Println("find contact bucket chan len post: ", len(*network.BucketChan))
+		fmt.Println("find contact bucketwait chan len post: ", len(*network.BucketWaitChan))
 
 		// Lookup closest contacts over channels
 		*network.FindChan <- findContactPayload.Target
