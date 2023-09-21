@@ -16,6 +16,8 @@ func main() {
 		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
 		go kademliaNode.LookupContactRoutine()
 
+		go kademliaNode.HeartbeatSignal()
+
 	} else {
 		nodeAddress := os.Getenv("HOSTNAME")
 		kademliaNode = labCode.NewKademliaNode(nodeAddress + ":8051")
