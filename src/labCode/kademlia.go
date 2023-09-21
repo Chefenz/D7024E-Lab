@@ -3,7 +3,6 @@ package labCode
 import (
 	"fmt"
 	"reflect"
-	"sync"
 	"time"
 )
 
@@ -40,13 +39,11 @@ type ReturnFindContactPayload struct {
 
 type StorePayload struct {
 	Key  *KademliaID
-	Wg   *sync.WaitGroup
 	Data string
 }
 
 type ReturnStorePayload struct {
 	Key *KademliaID
-	Wg  *sync.WaitGroup
 }
 
 // Structs for read and write operations (move these to an appropriate place later)
@@ -125,13 +122,8 @@ func (kademlia *Kademlia) Store(data []byte) {
 	newDataId := NewKademliaDataID(strData)
 
 	closestContactsLst := kademlia.RoutingTable.FindClosestContacts(newDataId, alpha)
-	var wg sync.WaitGroup
-	wg.Add(len(closestContactsLst))
 
-	storePayload := StorePayload{Key: newDataId, Wg: &wg, Data: strData}
-	fmt.Println("The StorePayload:", storePayload)
-	fmt.Println("The data in the Data field:", data)
-	fmt.Println("The type of the data:", reflect.TypeOf(data))
+	storePayload := StorePayload{Key: newDataId, Data: strData}
 	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload}
 
 	for i := 0; i < len(closestContactsLst); i++ {
