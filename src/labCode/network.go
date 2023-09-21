@@ -117,6 +117,9 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		requestWrite := WriteOperation{Key: key.String(), Data: data, Resp: make(chan bool)}
 		*network.DataWriteChan <- requestWrite
 
+		succeeded := <-requestWrite.Resp
+		println(succeeded)
+
 		returnStorePayload := ReturnStorePayload{Key: key}
 		transmitObj := TransmitObj{Message: "RETURN_STORE", Sender: network.Me, Data: returnStorePayload}
 		network.sendMessage(&transmitObj, &sentFrom)
