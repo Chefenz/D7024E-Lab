@@ -66,6 +66,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
 		*network.BucketChan <- *contact
 		<-*network.BucketWaitChan
+
 		transmitObj := TransmitObj{Message: "PONG", Data: network.Me}
 		network.sendMessage(&transmitObj, contact)
 	case "PONG":
@@ -74,15 +75,13 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		<-*network.BucketWaitChan
 	case "HEARTBEAT":
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
-		fmt.Println(contact)
-		fmt.Println("bucketchannel len: ", len(*network.BucketChan))
-		fmt.Println("bucketwaitchannel len: ", len(*network.BucketWaitChan))
 		*network.BucketChan <- *contact
 		<-*network.BucketWaitChan
 	case "FIND_CONTACT":
 		findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
 		*network.BucketChan <- findContactPayload.Sender
 		<-*network.BucketWaitChan
+
 		// Lookup closest contacts over channels
 		*network.FindChan <- findContactPayload.Target
 		closestContacts := <-*network.ReturnFindChan
