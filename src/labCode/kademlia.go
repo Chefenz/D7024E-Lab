@@ -111,7 +111,7 @@ func (kademlia *Kademlia) HeartbeatSignal() {
 	// Start a goroutine to send heartbeat signals at a regular interval.
 	go func() {
 		for {
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Second * 30)
 			heartbeat <- true
 		}
 	}()
