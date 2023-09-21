@@ -79,6 +79,8 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 func (routingTable *RoutingTable) UpdateBucketRoutine() {
 	contact := <-*routingTable.BucketChan
 
+	fmt.Println("recieved contact to update in bucket: ", contact)
+
 	routingTable.AddContact(contact)
 
 	fmt.Println("node has been updated in bucket")

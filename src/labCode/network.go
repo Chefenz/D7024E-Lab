@@ -71,6 +71,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		*network.BucketChan <- *contact
 	case "HEARTBEAT":
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+		fmt.Println(contact)
 		*network.BucketChan <- *contact
 	case "FIND_CONTACT":
 		findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
@@ -110,8 +111,6 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		fmt.Println("Data is not a Map")
 	}
 
-	fmt.Println("obj type is: ", objType)
-
 	switch objType {
 	case "Contact":
 		var contact *Contact
@@ -119,7 +118,6 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		chk(err)
 		return contact
 	case "FindContactPayload":
-		fmt.Println("is in here")
 		var findContactPayload *FindContactPayload
 		err := mapstructure.Decode(objMap, &findContactPayload)
 		chk(err)
