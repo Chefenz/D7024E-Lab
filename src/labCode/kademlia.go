@@ -194,6 +194,7 @@ func (Kademlia *Kademlia) DataStorageManager() {
 				read.Resp <- dataStorageObject.Data
 			}
 		case write := <-*Kademlia.DataWriteChan:
+			fmt.Println("in write case")
 			key := write.Key
 			data := write.Data
 
@@ -206,7 +207,6 @@ func (Kademlia *Kademlia) DataStorageManager() {
 			write.Resp <- true
 		default:
 			//No write or read request has been issued
-			continue
 		}
 	}
 }
