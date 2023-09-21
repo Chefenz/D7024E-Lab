@@ -104,8 +104,38 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 			*network.LookupChan <- returnFindContactPayload.Target
 		}
 
-	case "FIND_DATA":
-		fmt.Println("This should handle finddata")
+	case "FIND_VALUE":
+		findValuePayload := decodeTransmitObj(transmitObj, "FindValuePayload").(*FindValuePayload)
+		sentFrom := transmitObj.Sender
+
+		key := findValuePayload.key
+
+		requestRead := ReadOperation{Key: key.String(), Resp: make(chan []byte)}
+		*network.DataReadChan <- requestRead
+
+		result := <-requestRead.Resp
+
+		if result != nil {
+			returnFindValueDataPayload := ReturnFindValueDataPayload{Data: string(result)}
+			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValueDataPayload}
+			network.sendMessage(&transmitObj, &sentFrom)
+
+		}
+
+		//Todo Keep looking when value could not be found
+
+	case "RETURN_FIND_VALUE_DATA":
+		returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValueDataPayload").(*ReturnFindValueDataPayload)
+
+		result := returnFindValueDataPayload.Data
+		select {
+		case *network.CLIChan <- result:
+			fmt.Println("I WROTE")
+		default:
+			fmt.Println("I skipped")
+
+		}
+
 	case "STORE":
 		storePayload := decodeTransmitObj(transmitObj, "StorePayload").(*StorePayload)
 		sentFrom := transmitObj.Sender
@@ -177,6 +207,17 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		chk(err)
 		return returnStorePayload
 
+	case "FindValuePayload":
+		var findValuePayload *FindValuePayload
+		err := mapstructure.Decode(objMap, &findValuePayload)
+		chk(err)
+		return findValuePayload
+
+	case "ReturnFindValueDataPayload":
+		var returnFindValueDataPayload *ReturnFindValueDataPayload
+		err := mapstructure.Decode(objMap, &returnFindValueDataPayload)
+		chk(err)
+		return returnFindValueDataPayload
 	}
 
 	return nil

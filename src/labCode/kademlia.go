@@ -39,6 +39,19 @@ type ReturnFindContactPayload struct {
 	Target    Contact
 }
 
+type FindValuePayload struct {
+	key *KademliaID
+}
+
+type ReturnFindValueDataPayload struct {
+	Data string
+}
+
+type ReturnFindValueContactsPayload struct {
+	TargetKey *KademliaID
+	Data      []Contact
+}
+
 type StorePayload struct {
 	Key  *KademliaID
 	Data string
@@ -119,7 +132,15 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 }
 
 func (kademlia *Kademlia) LookupData(hash string) {
-	// TODO
+	dataKademliaID := NewKademliaID(hash)
+
+	closestContactsLst := kademlia.RoutingTable.FindClosestContacts(dataKademliaID, alpha)
+
+	findValuePayload := FindValuePayload{key: dataKademliaID}
+	transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: kademlia.RoutingTable.Me, Data: findValuePayload}
+	for i := 0; i < len(closestContactsLst); i++ {
+		kademlia.Network.sendMessage(&transmitObj, &closestContactsLst[i])
+	}
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
