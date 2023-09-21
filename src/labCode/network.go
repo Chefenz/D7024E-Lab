@@ -161,6 +161,7 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		return returnFindContactPayload
 
 	case "StorePayload":
+		fmt.Println("IN STORE PAYLOAD CASE")
 		var storePayload *StorePayload
 		err := mapstructure.Decode(objMap, &storePayload)
 		chk(err)
