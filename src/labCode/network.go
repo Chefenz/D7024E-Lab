@@ -112,43 +112,25 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		key := storePayload.Key
 		data := storePayload.Data
 		wg := storePayload.Wg
-		successfulStoreCh := storePayload.SuccessfullStoreChan
-		cLICh := storePayload.CLIChan
 
 		requestWrite := WriteOperation{Key: key.String(), Data: data, Resp: make(chan bool)}
 		*network.DataWriteChan <- requestWrite
 
-		couldStore := <-requestWrite.Resp
-
-		if couldStore {
-			successfulStoreCh <- true
-		}
-
-		returnStorePayload := ReturnStorePayload{Key: key, Wg: wg, SuccessfullStoreChan: successfulStoreCh, CLICh: cLICh}
+		returnStorePayload := ReturnStorePayload{Key: key, Wg: wg}
 		transmitObj := TransmitObj{Message: "RETURN_STORE", Sender: network.Me, Data: returnStorePayload}
 		network.sendMessage(&transmitObj, &sentFrom)
 
 	case "RETURN_STORE":
 		returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*StorePayload)
 
-		key := returnStorePayload.Key
 		wg := returnStorePayload.Wg
-		cLICh := returnStorePayload.CLIChan
-		successfulStoreCh := returnStorePayload.SuccessfullStoreChan
 
 		//Tell the waitgroup that it is done and wait for all the other store ndn retutn store to come trough
 		wg.Done()
 		wg.Wait()
 
-		if <-successfulStoreCh {
-			keyAsStr := key.String()
-			cLICh <- keyAsStr
-		} else {
-			cLICh <- ""
-		}
+		fmt.Println("In return store after wait")
 
-		close(cLICh)
-		close(successfulStoreCh)
 	}
 }
 

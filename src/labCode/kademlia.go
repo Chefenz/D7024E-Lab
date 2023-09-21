@@ -39,18 +39,14 @@ type ReturnFindContactPayload struct {
 }
 
 type StorePayload struct {
-	Key                  *KademliaID
-	Wg                   *sync.WaitGroup
-	SuccessfullStoreChan chan bool
-	CLIChan              chan string
-	Data                 []byte
+	Key  *KademliaID
+	Wg   *sync.WaitGroup
+	Data []byte
 }
 
 type ReturnStorePayload struct {
-	Key                  *KademliaID
-	Wg                   *sync.WaitGroup
-	SuccessfullStoreChan chan bool
-	CLICh                chan string
+	Key *KademliaID
+	Wg  *sync.WaitGroup
 }
 
 // Structs for read and write operations (move these to an appropriate place later)
@@ -131,9 +127,7 @@ func (kademlia *Kademlia) Store(data []byte, ch chan string) {
 	var wg sync.WaitGroup
 	wg.Add(len(closestContactsLst))
 
-	successfullStoreChan := make(chan bool)
-
-	storePayload := StorePayload{Key: newDataId, Wg: &wg, SuccessfullStoreChan: successfullStoreChan, CLIChan: ch, Data: data}
+	storePayload := StorePayload{Key: newDataId, Wg: &wg, Data: data}
 	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload}
 
 	for i := 0; i < len(closestContactsLst); i++ {
