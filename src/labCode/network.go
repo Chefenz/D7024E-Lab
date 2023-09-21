@@ -62,18 +62,18 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 
 	switch transmitObj.Message {
 	case "PING":
-		contact := decodeTransmitObj(transmitObj, "Contact").(Contact)
-		*network.BucketChan <- contact
+		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+		*network.BucketChan <- *contact
 		transmitObj := TransmitObj{Message: "PONG", Data: network.Me}
-		network.sendMessage(&transmitObj, &contact)
+		network.sendMessage(&transmitObj, contact)
 	case "PONG":
-		contact := decodeTransmitObj(transmitObj, "Contact").(Contact)
-		*network.BucketChan <- contact
+		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+		*network.BucketChan <- *contact
 	case "HEARTBEAT":
-		contact := decodeTransmitObj(transmitObj, "Contact").(Contact)
-		*network.BucketChan <- contact
+		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+		*network.BucketChan <- *contact
 	case "FIND_CONTACT":
-		findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(FindContactPayload)
+		findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
 		*network.BucketChan <- findContactPayload.Sender
 
 		// Lookup closest contacts over channels
@@ -86,9 +86,9 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		network.sendMessage(&transmitObj, &findContactPayload.Sender)
 
 	case "RETURN_FIND_CONTACT":
-		returnFindContactPayload := decodeTransmitObj(transmitObj, "ReturnFindContactPayload").(ReturnFindContactPayload)
+		returnFindContactPayload := decodeTransmitObj(transmitObj, "ReturnFindContactPayload").(*ReturnFindContactPayload)
 
-		foundTarget := network.checkForFindContact(returnFindContactPayload)
+		foundTarget := network.checkForFindContact(*returnFindContactPayload)
 
 		if foundTarget == false {
 			fmt.Println("Did Not Find The Target Node Will Try Again")
