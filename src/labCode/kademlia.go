@@ -119,7 +119,7 @@ func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO
 }
 
-func (kademlia *Kademlia) Store(data []byte, ch chan string) {
+func (kademlia *Kademlia) Store(data []byte) {
 	strData := string(data)
 	newDataId := NewKademliaDataID(strData)
 

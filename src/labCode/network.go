@@ -121,7 +121,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		network.sendMessage(&transmitObj, &sentFrom)
 
 	case "RETURN_STORE":
-		returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*StorePayload)
+		returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
 
 		wg := returnStorePayload.Wg
 
