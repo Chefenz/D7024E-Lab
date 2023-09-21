@@ -210,7 +210,8 @@ func (Kademlia *Kademlia) DataStorageManager() {
 
 			write.Resp <- true
 		default:
-			panic("Error in DataStorageManager")
+			fmt.Println("In DataStoreManager default")
+			continue
 		}
 	}
 }
