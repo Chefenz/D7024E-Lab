@@ -136,6 +136,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 
 func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 	objMap, ok := obj.Data.(map[string]interface{})
+	fmt.Println("Object data map:", objMap)
 
 	if ok != true {
 		fmt.Println("Data is not a Map")
@@ -161,7 +162,6 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		return returnFindContactPayload
 
 	case "StorePayload":
-		fmt.Println("IN STORE PAYLOAD CASE")
 		var storePayload *StorePayload
 		err := mapstructure.Decode(objMap, &storePayload)
 		chk(err)
