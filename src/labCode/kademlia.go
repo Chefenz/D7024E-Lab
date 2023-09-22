@@ -7,7 +7,7 @@ import (
 )
 
 const alpha = 3
-const dataDecayInterval = 7
+const chkDataDecayinter = 7
 
 type Kademlia struct {
 	RoutingTable      *RoutingTable
@@ -70,7 +70,7 @@ func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	dataReadChan := make(chan ReadOperation)
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
-	dataManagerTicker := time.NewTicker(dataDecayInterval * time.Second)
+	dataManagerTicker := time.NewTicker(chkDataDecayinter * time.Second)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan)
 	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, dataManagerTicker}, &CLIChan
@@ -86,7 +86,7 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	dataReadChan := make(chan ReadOperation)
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
-	dataManagerTicker := time.NewTicker(dataDecayInterval * time.Second)
+	dataManagerTicker := time.NewTicker(chkDataDecayinter * time.Second)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan)
 	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, dataManagerTicker}, &CLIChan
