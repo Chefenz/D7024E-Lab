@@ -27,6 +27,27 @@ func TestNewRoutingTable(t *testing.T) {
 	assert.Equal(t, routingTable, testTable)
 }
 
+func TestAddContactRoutingtable(t *testing.T) {
+	testMeContact := NewContact(NewKademliaID("TEST1"), "TEST_ADDRES1")
+
+	bucketChan := make(chan Contact, 1)
+	bucketWaitChan := make(chan bool)
+	findChan := make(chan Contact)
+	returnFindChan := make(chan []Contact)
+	routingTable := NewRoutingTable(testMeContact, &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
+
+	addedContact := NewContact(NewKademliaID("ADDED"), "ADDED_ADDRES")
+
+	routingTable.AddContact(addedContact)
+
+	closestContact := routingTable.FindClosestContacts(addedContact.ID, 1)
+	addedContact.Distance = closestContact[0].Distance
+	//testMeContact.Distance = nil
+
+	assert.Equal(t, closestContact[0], addedContact)
+
+}
+
 /*
 func TestRoutingTable(t *testing.T) {
 	rt := NewRoutingTable(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
