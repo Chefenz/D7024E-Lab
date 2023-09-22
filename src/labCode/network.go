@@ -10,19 +10,20 @@ import (
 )
 
 type Network struct {
-	Me             Contact
-	BucketChan     *chan Contact        // For update bucket
-	BucketWaitChan *chan bool           // Wait for bucket update completion
-	LookupChan     *chan Contact        // For lookup of contact
-	FindChan       *chan Contact        // For find a contact
-	ReturnFindChan *chan []Contact      // For returning closest contacts to a contact
-	DataReadChan   *chan ReadOperation  //For sending read requests to the data storage
-	DataWriteChan  *chan WriteOperation //For sending write requests to the data storage
-	CLIChan        *chan string
+	Me               Contact
+	BucketChan       *chan Contact        // For update bucket
+	BucketWaitChan   *chan bool           // Wait for bucket update completion
+	LookupChan       *chan Contact        // For lookup of contact
+	FindChan         *chan Contact        // For find a contact
+	ReturnFindChan   *chan []Contact      // For returning closest contacts to a contact
+	DataReadChan     *chan ReadOperation  //For sending read requests to the data storage
+	DataWriteChan    *chan WriteOperation //For sending write requests to the data storage
+	CLIChan          *chan string
+	FindConValueChan *chan FindContCloseToValOp
 }
 
-func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string) Network {
-	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan}
+func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string, findContCloseToValOp *chan FindContCloseToValOp) Network {
+	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan, FindConValueChan: findContCloseToValOp}
 }
 
 func (network *Network) Listen(ip string, port int) {
@@ -117,27 +118,48 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		fmt.Println("The Result of the read operation in network:", result)
 
 		if result != nil {
-			returnFindValueDataPayload := ReturnFindValueDataPayload{Data: string(result)}
+			returnFindValueDataPayload := ReturnFindValueDataPayload{Data: string(result), Shortlist: nil, TargetKey: nil}
 			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValueDataPayload}
 			network.sendMessage(&transmitObj, &sentFrom)
 
 		} else {
-			fmt.Println("The read result is nil!")
+			requestFindClosesTContactOp := FindContCloseToValOp{TargetID: key, Resp: make(chan []Contact)}
+
+			*network.FindConValueChan <- requestFindClosesTContactOp
+			closestContacts := <-requestFindClosesTContactOp.Resp
+
+			returnFindValueDataPayload := ReturnFindValueDataPayload{Data: "", Shortlist: closestContacts, TargetKey: key}
+			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValueDataPayload}
+			network.sendMessage(&transmitObj, &sentFrom)
 
 		}
-
-		//Todo Keep looking when value could not be found
 
 	case "RETURN_FIND_VALUE_DATA":
 		returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValueDataPayload").(*ReturnFindValueDataPayload)
 
-		result := returnFindValueDataPayload.Data
-		select {
-		case *network.CLIChan <- result:
-			fmt.Println("I WROTE")
-		default:
-			fmt.Println("I skipped")
+		targetID := returnFindValueDataPayload.TargetKey
+		dataResult := returnFindValueDataPayload.Data
+		shortLst := returnFindValueDataPayload.Shortlist
 
+		if dataResult != "" {
+			select {
+			case *network.CLIChan <- dataResult + " " + transmitObj.Sender.String():
+				fmt.Println("I Had the right result so I wrote", transmitObj.Sender.String())
+			default:
+				fmt.Println("I had the right result but someone already wrote so I skipped", transmitObj.Sender.String())
+			}
+		} else {
+			select {
+			case *network.CLIChan <- dataResult + transmitObj.Sender.String():
+				fmt.Println("I did not have the valid result but It had already been posted So I stop", transmitObj.Sender.String())
+			default:
+				fmt.Println("I did not have the valid result and it had not been posted so I send out another find value", transmitObj.Sender.String())
+				findValuePayload := FindValuePayload{Key: targetID}
+				transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: network.Me, Data: findValuePayload}
+				for i := 0; i < len(shortLst); i++ {
+					network.sendMessage(&transmitObj, &shortLst[i])
+				}
+			}
 		}
 
 	case "STORE":

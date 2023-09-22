@@ -18,6 +18,7 @@ func main() {
 		go kademliaNode.LookupContactRoutine()
 
 		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.LookupCloseContactsToValueRoutine()
 		go kademliaNode.DataStorageManager()
 
 	} else {
@@ -38,6 +39,7 @@ func main() {
 		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
 
 		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.LookupCloseContactsToValueRoutine()
 		go kademliaNode.DataStorageManager()
 
 	}
