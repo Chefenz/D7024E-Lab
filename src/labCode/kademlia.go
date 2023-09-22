@@ -40,7 +40,7 @@ type ReturnFindContactPayload struct {
 }
 
 type FindValuePayload struct {
-	key *KademliaID
+	Key *KademliaID
 }
 
 type ReturnFindValueDataPayload struct {
@@ -136,7 +136,7 @@ func (kademlia *Kademlia) LookupData(hash string) {
 
 	closestContactsLst := kademlia.RoutingTable.FindClosestContacts(dataKademliaID, alpha)
 
-	findValuePayload := FindValuePayload{key: dataKademliaID}
+	findValuePayload := FindValuePayload{Key: dataKademliaID}
 	transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: kademlia.RoutingTable.Me, Data: findValuePayload}
 	for i := 0; i < len(closestContactsLst); i++ {
 		kademlia.Network.sendMessage(&transmitObj, &closestContactsLst[i])
@@ -214,7 +214,6 @@ func (kademlia *Kademlia) LookupContactRoutine() {
 }
 
 func (Kademlia *Kademlia) DataStorageManager() {
-	//Create a ticker that ticks every 5 seconds
 	for {
 		select {
 		case read := <-*Kademlia.DataReadChan:
