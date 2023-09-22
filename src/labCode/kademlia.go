@@ -134,6 +134,8 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 func (kademlia *Kademlia) LookupData(hash string) {
 	dataKademliaID := NewKademliaID(hash)
 
+	fmt.Println("DatakademliaID in LookupData:", dataKademliaID.String())
+
 	closestContactsLst := kademlia.RoutingTable.FindClosestContacts(dataKademliaID, alpha)
 
 	findValuePayload := FindValuePayload{Key: dataKademliaID}
