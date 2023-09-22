@@ -116,6 +116,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		fmt.Println("Affter request read")
 
 		result := <-requestRead.Resp
+		fmt.Println("The Result of the read operation in network:", result)
 
 		if result != nil {
 			returnFindValueDataPayload := ReturnFindValueDataPayload{Data: string(result)}
