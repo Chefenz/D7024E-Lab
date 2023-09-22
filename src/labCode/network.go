@@ -123,6 +123,9 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValueDataPayload}
 			network.sendMessage(&transmitObj, &sentFrom)
 
+		} else {
+			fmt.Println("The read result is nil!")
+
 		}
 
 		//Todo Keep looking when value could not be found
