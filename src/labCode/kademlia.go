@@ -217,6 +217,7 @@ func (Kademlia *Kademlia) DataStorageManager() {
 	for {
 		select {
 		case read := <-*Kademlia.DataReadChan:
+			fmt.Println("In read case")
 			dataStorageObject := Kademlia.DataStorage[read.Key]
 			if reflect.TypeOf(dataStorageObject) == nil {
 				read.Resp <- nil
