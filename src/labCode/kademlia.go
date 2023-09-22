@@ -62,7 +62,6 @@ func chk(err error) {
 }
 
 func (kademlia *Kademlia) Ping(contact *Contact) {
-	//fmt.Println("sending ping to addr:", contact.Address)
 	transmitObj := TransmitObj{Message: "PING", Data: kademlia.RoutingTable.Me}
 	kademlia.Network.sendMessage(&transmitObj, contact)
 }
@@ -89,7 +88,7 @@ func (kademlia *Kademlia) Store(data []byte) {
 	// TODO
 }
 
-func (kademlia *Kademlia) SendHeartbeatMessage() {
+func (kademlia *Kademlia) SendHeartbeatMessages() {
 	for i := 0; i < len(kademlia.RoutingTable.buckets); i++ {
 		bucket := kademlia.RoutingTable.buckets[i]
 		if bucket.list.Len() > 0 {
@@ -99,13 +98,10 @@ func (kademlia *Kademlia) SendHeartbeatMessage() {
 			contacts := bucket.GetContactAndCalcDistance(kademlia.RoutingTable.Me.ID)
 			for k := 0; k < len(contacts); k++ {
 				contact := contacts[k]
-				transmitObj := TransmitObj{Message: "HEARTBEAT", Data: kademlia.RoutingTable.Me}
-				kademlia.Network.sendMessage(&transmitObj, &contact)
-
+				kademlia.Ping(&contact)
 			}
 		}
 	}
-
 }
 
 func (kademlia *Kademlia) HeartbeatSignal(stopChan <-chan string) {

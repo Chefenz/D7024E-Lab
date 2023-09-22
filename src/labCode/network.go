@@ -80,10 +80,6 @@ func (network *Network) handleRPC(data []byte) {
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
 		*network.BucketChan <- *contact
 		<-*network.BucketWaitChan
-	case "HEARTBEAT":
-		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
-		*network.BucketChan <- *contact
-		<-*network.BucketWaitChan
 	case "FIND_CONTACT":
 		findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
 		*network.BucketChan <- findContactPayload.Sender
