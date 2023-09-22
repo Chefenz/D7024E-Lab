@@ -28,7 +28,7 @@ func TestNewNetwork(t *testing.T) {
 
 func TestListen(t *testing.T) {
 
-	listenContact := NewContact(NewRandomKademliaID(), "localhost:8051")
+	listenContact := NewContact(NewRandomKademliaID(), ":8051")
 
 	kademliaNode := NewMasterKademliaNode()
 
@@ -36,7 +36,7 @@ func TestListen(t *testing.T) {
 
 	asserts := assert.New(t)
 
-	go kademliaNode.Network.Listen("localhost", 8051, *kademliaNode.StopChan)
+	go kademliaNode.Network.Listen("", 8051, *kademliaNode.StopChan)
 
 	asserts.NotPanics(func() { kademliaNode.Network.sendMessage(&testData, &listenContact) }, "The code did panic")
 
@@ -45,13 +45,14 @@ func TestListen(t *testing.T) {
 
 func TestHandleRPC(t *testing.T) {
 
-	listenContact := NewContact(NewRandomKademliaID(), "localhost:8052")
-	senderContact := NewContact(NewRandomKademliaID(), "localhost:8053")
-	targetContact := NewContact(NewRandomKademliaID(), "localhost:8053")
+	listenContact := NewContact(NewRandomKademliaID(), ":8052")
+
+	senderContact := NewContact(NewRandomKademliaID(), ":8053")
+	targetContact := NewContact(NewRandomKademliaID(), ":8053")
 
 	kademliaNode := NewMasterKademliaNode()
 
-	go kademliaNode.Network.Listen("localhost", 8052, *kademliaNode.StopChan)
+	go kademliaNode.Network.Listen("", 8052, *kademliaNode.StopChan)
 	go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
 	go kademliaNode.RoutingTable.FindClosestContactsRoutine(*kademliaNode.StopChan)
 	go kademliaNode.LookupContactRoutine(*kademliaNode.StopChan)

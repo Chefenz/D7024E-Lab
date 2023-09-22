@@ -39,6 +39,7 @@ func (network *Network) Listen(ip string, port int, stopChan chan string) {
 		select {
 		case <-stopChan:
 			fmt.Println("Stopping listen..")
+			conn.Close()
 			return
 		default:
 			fmt.Println("in listen")
