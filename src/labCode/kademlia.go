@@ -144,7 +144,6 @@ func (kademlia *Kademlia) LookupData(hash string) {
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
-	fmt.Println("In store")
 	strData := string(data)
 	newDataId := NewKademliaDataID(strData)
 
@@ -219,6 +218,8 @@ func (Kademlia *Kademlia) DataStorageManager() {
 		case read := <-*Kademlia.DataReadChan:
 			fmt.Println("In read case")
 			dataStorageObject := Kademlia.DataStorage[read.Key]
+			fmt.Println("Key used:", read.Key)
+			fmt.Println("The datastorage object", dataStorageObject)
 			if reflect.TypeOf(dataStorageObject) == nil {
 				read.Resp <- nil
 			} else {

@@ -110,10 +110,8 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 
 		key := findValuePayload.Key
 
-		fmt.Println("Just before Request Read")
 		requestRead := ReadOperation{Key: key.String(), Resp: make(chan []byte)}
 		*network.DataReadChan <- requestRead
-		fmt.Println("Affter request read")
 
 		result := <-requestRead.Resp
 		fmt.Println("The Result of the read operation in network:", result)
