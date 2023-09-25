@@ -146,17 +146,17 @@ func (network *Network) handleRPC(data []byte) {
 			// Check if dataResult is not empty
 			select {
 			case *network.CLIChan <- valueResult + " " + transmitObj.Sender.String():
-				fmt.Println("I had the right result so I wrote", transmitObj.Sender.String())
+				//fmt.Println("I had the right result so I wrote", transmitObj.Sender.String())
 			default:
-				fmt.Println("I had the right result but someone already wrote so I skipped", transmitObj.Sender.String())
+				//fmt.Println("I had the right result but someone already wrote so I skipped", transmitObj.Sender.String())
 			}
 		} else {
 			// Check if dataResult is empty
 			select {
 			case *network.CLIChan <- valueResult + transmitObj.Sender.String():
-				fmt.Println("I did not have the valid result but It had already been posted So I stop", transmitObj.Sender.String())
+				//fmt.Println("I did not have the valid result but It had already been posted So I stop", transmitObj.Sender.String())
 			default:
-				fmt.Println("I did not have the valid result and it had not been posted so I send out another find value", transmitObj.Sender.String())
+				//fmt.Println("I did not have the valid result and it had not been posted so I send out another find value", transmitObj.Sender.String())
 
 				findValuePayload := FindValuePayload{Key: targetID}
 				transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: network.Me, Data: findValuePayload}
@@ -177,8 +177,7 @@ func (network *Network) handleRPC(data []byte) {
 		requestWrite := WriteOperation{Key: key.String(), Data: data, Resp: make(chan bool)}
 		*network.DataWriteChan <- requestWrite
 
-		succeeded := <-requestWrite.Resp
-		println(succeeded)
+		<-requestWrite.Resp
 
 		returnStorePayload := ReturnStorePayload{Key: key}
 		transmitObj := TransmitObj{Message: "RETURN_STORE", Sender: network.Me, Data: returnStorePayload}
@@ -191,9 +190,9 @@ func (network *Network) handleRPC(data []byte) {
 
 		select {
 		case *network.CLIChan <- key.String():
-			fmt.Println("I WROTE")
+			//fmt.Println("I WROTE")
 		default:
-			fmt.Println("Someone already wrote the answer so I skipped")
+			//fmt.Println("Someone already wrote the answer so I skipped")
 		}
 	}
 }
