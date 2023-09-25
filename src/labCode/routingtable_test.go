@@ -40,9 +40,8 @@ func TestAddContactRoutingtable(t *testing.T) {
 
 	routingTable.AddContact(addedContact)
 
-	closestContact := routingTable.FindClosestContacts(addedContact.ID, 1)
+	closestContact := routingTable.FindClosestContacts(addedContact.ID, 3)
 	addedContact.Distance = closestContact[0].Distance
-	//testMeContact.Distance = nil
 
 	assert.Equal(t, closestContact[0], addedContact)
 
