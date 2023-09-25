@@ -7,7 +7,7 @@ import (
 )
 
 const alpha = 3
-const dataDecayInterval = 7
+const chkDataDecayinter = 7
 
 type Kademlia struct {
 	RoutingTable      *RoutingTable
@@ -106,7 +106,6 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
 	findContCloseToValChan := make(chan FindContCloseToValOp)
-	dataManagerTicker := time.NewTicker(dataDecayInterval * time.Second)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
 	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker}, &CLIChan
