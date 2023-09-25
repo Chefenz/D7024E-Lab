@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewContact(t *testing.T) {
-	testID := NewKademliaID("TEST")
+	testID := NewKademliaDataID("TEST")
 	createdContact := NewContact(testID, "TEST_ADDRES")
 	testContact := Contact{ID: testID, Address: "TEST_ADDRES", Distance: nil}
 
@@ -16,8 +16,8 @@ func TestNewContact(t *testing.T) {
 }
 
 func TestContactCalcDistance(t *testing.T) {
-	testID1 := NewKademliaID("TEST1")
-	testID2 := NewKademliaID("TEST2")
+	testID1 := NewKademliaDataID("TEST1")
+	testID2 := NewKademliaDataID("TEST2")
 	createdContact1 := NewContact(testID1, "TEST_ADDRES1")
 	createdContact2 := NewContact(testID2, "TEST_ADDRES2")
 
@@ -29,9 +29,9 @@ func TestContactCalcDistance(t *testing.T) {
 }
 
 func TestLess(t *testing.T) {
-	testContact1 := NewContact(NewKademliaID("TEST1"), "TEST_ADDRES1")
-	testContact2 := NewContact(NewKademliaID("TEST2"), "TEST_ADDRES2")
-	testContact3 := NewContact(NewKademliaID("TEST3"), "TEST_ADDRES1")
+	testContact1 := NewContact(NewKademliaDataID("TEST1"), "TEST_ADDRES1")
+	testContact2 := NewContact(NewKademliaDataID("TEST2"), "TEST_ADDRES2")
+	testContact3 := NewContact(NewKademliaDataID("TEST3"), "TEST_ADDRES1")
 
 	var distance1 KademliaID
 	myIDValue1 := [IDLength]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
@@ -82,9 +82,9 @@ func TestString(t *testing.T) {
 
 func TestContactCandidates(t *testing.T) {
 	// Create some test contacts
-	testContact1 := NewContact(NewKademliaID("TEST1"), "TEST_ADDRES1")
-	testContact2 := NewContact(NewKademliaID("TEST2"), "TEST_ADDRES2")
-	testContact3 := NewContact(NewKademliaID("TEST3"), "TEST_ADDRES1")
+	testContact1 := NewContact(NewKademliaDataID("TEST1"), "TEST_ADDRES1")
+	testContact2 := NewContact(NewKademliaDataID("TEST2"), "TEST_ADDRES2")
+	testContact3 := NewContact(NewKademliaDataID("TEST3"), "TEST_ADDRES1")
 
 	var distance1 KademliaID
 	myIDValue1 := [IDLength]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
@@ -138,7 +138,7 @@ func TestContactCandidates(t *testing.T) {
 /*
 
 func TestContactString(t *testing.T) {
-	kadID := NewKademliaID("test_id")
+	kadID := NewKademliaDataID("test_id")
 	contact := NewContact(kadID, "test_address")
 	expectedString := `contact("test_id", "test_address")`
 
