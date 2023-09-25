@@ -138,13 +138,13 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValuePayload").(*ReturnFindValuePayload)
 
 		targetID := returnFindValueDataPayload.TargetKey
-		dataResult := returnFindValueDataPayload.Data
+		valueResult := returnFindValueDataPayload.Data
 		shortLst := returnFindValueDataPayload.Shortlist
 
-		if dataResult != "" {
+		if valueResult != "" {
 			// Check if dataResult is not empty
 			select {
-			case *network.CLIChan <- dataResult + " " + transmitObj.Sender.String():
+			case *network.CLIChan <- valueResult + " " + transmitObj.Sender.String():
 				fmt.Println("I had the right result so I wrote", transmitObj.Sender.String())
 			default:
 				fmt.Println("I had the right result but someone already wrote so I skipped", transmitObj.Sender.String())
@@ -152,12 +152,11 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		} else {
 			// Check if dataResult is empty
 			select {
-			case *network.CLIChan <- dataResult + transmitObj.Sender.String():
+			case *network.CLIChan <- valueResult + transmitObj.Sender.String():
 				fmt.Println("I did not have the valid result but It had already been posted So I stop", transmitObj.Sender.String())
 			default:
 				fmt.Println("I did not have the valid result and it had not been posted so I send out another find value", transmitObj.Sender.String())
 
-				// Perform some other action if dataResult is empty
 				findValuePayload := FindValuePayload{Key: targetID}
 				transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: network.Me, Data: findValuePayload}
 				for i := 0; i < len(shortLst); i++ {
