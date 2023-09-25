@@ -124,8 +124,13 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 
 	}
 
-	//TODO - HANDLE THE ACTUAL GET COMMAND AND VERIFY THAT THE OTHER ARGUMENT IS A 160-BIT SHA1-HASH
-	return "TEMPSTR", nil
+	//TODO: VERIFY THAT THE OTHER ARGUMENT IS A HASH
+	dataIDStr := strings.Join(args, " ")
+	cli.KademliaNode.LookupData(dataIDStr)
+
+	result := <-*cli.CLINetworkChan
+
+	return "The retrived data: " + result, nil
 }
 
 func (cli *CLI) handleHelpCommand(args []string) string {

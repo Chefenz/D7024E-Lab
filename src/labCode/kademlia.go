@@ -13,8 +13,9 @@ type Kademlia struct {
 	RoutingTable      *RoutingTable
 	Network           Network
 	DataStorage       map[string]DataStorageObject
-	DataReadChan      *chan ReadOperation  //For sending read requests to the data storage
-	DataWriteChan     *chan WriteOperation //For sending write requests to the data storage
+	DataReadChan      *chan ReadOperation        //For sending read requests to the data storage
+	DataWriteChan     *chan WriteOperation       //For sending write requests to the data storage
+	FindConValueChan  *chan FindContCloseToValOp //For looking up contacts close to a target value
 	dataManagerTicker *time.Ticker
 }
 
@@ -39,6 +40,16 @@ type ReturnFindContactPayload struct {
 	Target    Contact
 }
 
+type FindValuePayload struct {
+	Key *KademliaID
+}
+
+type ReturnFindValueDataPayload struct {
+	Data      string
+	Shortlist []Contact
+	TargetKey *KademliaID
+}
+
 type StorePayload struct {
 	Key  *KademliaID
 	Data string
@@ -60,6 +71,13 @@ type WriteOperation struct {
 	Resp chan bool
 }
 
+//Struct for giving a request to look up nodes closest to a target
+
+type FindContCloseToValOp struct {
+	TargetID *KademliaID
+	Resp     chan []Contact
+}
+
 func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	id := NewRandomKademliaID()
 	bucketChan := make(chan Contact, 1)
@@ -70,10 +88,11 @@ func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	dataReadChan := make(chan ReadOperation)
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
-	dataManagerTicker := time.NewTicker(chkDataDecayinter * time.Second)
+	findContCloseToValChan := make(chan FindContCloseToValOp)
+	dataManagerTicker := time.NewTicker(dataDecayInterval * time.Second)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, dataManagerTicker}, &CLIChan
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker}, &CLIChan
 }
 
 func NewMasterKademliaNode() (Kademlia, *chan string) {
@@ -86,10 +105,10 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	dataReadChan := make(chan ReadOperation)
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
-	dataManagerTicker := time.NewTicker(chkDataDecayinter * time.Second)
+	findContCloseToValChan := make(chan FindContCloseToValOp)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, dataManagerTicker}, &CLIChan
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker}, &CLIChan
 }
 
 func chk(err error) {
@@ -119,11 +138,20 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 }
 
 func (kademlia *Kademlia) LookupData(hash string) {
-	// TODO
+	dataKademliaID := NewKademliaID(hash)
+
+	fmt.Println("DatakademliaID in LookupData:", dataKademliaID.String())
+
+	closestContactsLst := kademlia.RoutingTable.FindClosestContacts(dataKademliaID, alpha)
+
+	findValuePayload := FindValuePayload{Key: dataKademliaID}
+	transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: kademlia.RoutingTable.Me, Data: findValuePayload}
+	for i := 0; i < len(closestContactsLst); i++ {
+		kademlia.Network.sendMessage(&transmitObj, &closestContactsLst[i])
+	}
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
-	fmt.Println("In store")
 	strData := string(data)
 	newDataId := NewKademliaDataID(strData)
 
@@ -192,12 +220,26 @@ func (kademlia *Kademlia) LookupContactRoutine() {
 	}
 }
 
+func (kademlia *Kademlia) LookupCloseContactsToValueRoutine() {
+	for {
+		findContactNearValueStruct := <-*kademlia.FindConValueChan
+		targetID := findContactNearValueStruct.TargetID
+
+		closestContactsLst := kademlia.RoutingTable.FindClosestContacts(targetID, alpha)
+
+		findContactNearValueStruct.Resp <- closestContactsLst
+
+	}
+}
+
 func (Kademlia *Kademlia) DataStorageManager() {
-	//Create a ticker that ticks every 5 seconds
 	for {
 		select {
 		case read := <-*Kademlia.DataReadChan:
+			fmt.Println("In read case")
 			dataStorageObject := Kademlia.DataStorage[read.Key]
+			fmt.Println("Key used:", read.Key)
+			fmt.Println("The datastorage object", dataStorageObject)
 			if reflect.TypeOf(dataStorageObject) == nil {
 				read.Resp <- nil
 			} else {
