@@ -46,9 +46,7 @@ func (network *Network) Listen(ip string, port int, stopChan chan string) {
 			conn.Close()
 			return
 		default:
-			fmt.Println("in listen")
 			n, err := conn.Read(buffer)
-			fmt.Println("after read")
 			if err != nil {
 				fmt.Println("Error reading from UDP connection:", err)
 				continue
@@ -81,10 +79,6 @@ func (network *Network) handleRPC(data []byte) {
 		transmitObj := TransmitObj{Message: "PONG", Data: network.Me}
 		network.sendMessage(&transmitObj, contact)
 	case "PONG":
-		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
-		*network.BucketChan <- *contact
-		<-*network.BucketWaitChan
-	case "HEARTBEAT":
 		contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
 		*network.BucketChan <- *contact
 		<-*network.BucketWaitChan

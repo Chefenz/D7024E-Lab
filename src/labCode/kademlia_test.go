@@ -134,7 +134,7 @@ func TestHeartbeat(t *testing.T) {
 
 	go masterNode.Network.Listen("", 8057, *masterNode.StopChan)
 
-	asserts.NotPanics(func() { otherNode.SendHeartbeatMessage() }, "The code did panic")
+	asserts.NotPanics(func() { otherNode.SendHeartbeatMessages() }, "The code did panic")
 
 	masterNode.StopAllRoutines()
 
