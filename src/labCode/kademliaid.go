@@ -2,6 +2,7 @@ package labCode
 
 import (
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"math/rand"
 )
@@ -14,8 +15,7 @@ type KademliaID [IDLength]byte
 
 // NewKademliaID returns a new instance of a KademliaID based on the string input
 func NewKademliaID(data string) *KademliaID {
-	encoding := []byte(data)
-	decoded := sha1.Sum(encoding)
+	decoded, _ := hex.DecodeString(data)
 
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
@@ -32,6 +32,30 @@ func NewRandomKademliaID() *KademliaID {
 	for i := 0; i < IDLength; i++ {
 		newKademliaID[i] = uint8(rand.Intn(256))
 	}
+	return &newKademliaID
+}
+
+// NewMasterKademliaID returns a new instance of the kademliaID used by the master node
+// Used as a known node for other nodes joining the network
+func NewMasterKademliaID() *KademliaID {
+	decoded := sha256.Sum256([]byte("masterNode"))
+
+	newKademliaID := KademliaID{}
+	copy(newKademliaID[:], decoded[:IDLength])
+
+	return &newKademliaID
+}
+
+// NewKademliaDataID returns a new instance of a kademliaID used for data key value
+func NewKademliaDataID(dataStr string) *KademliaID {
+	encoding := []byte(dataStr)
+	decoded := sha1.Sum(encoding)
+
+	newKademliaID := KademliaID{}
+	for i := 0; i < IDLength; i++ {
+		newKademliaID[i] = decoded[i]
+	}
+
 	return &newKademliaID
 }
 

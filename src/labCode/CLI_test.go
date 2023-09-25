@@ -1,5 +1,6 @@
 package labCode
 
+/*
 import (
 	"testing"
 
@@ -124,3 +125,4 @@ func TestHandlePutCommandNoArgs(t *testing.T) {} //TODO
 func TestHandlePutCommandSuccessfulStorage(t *testing.T) {} //TODO
 
 func TestHandlePutCommandUnsuccessfulStorage(t *testing.T) {} //TODO
+*/

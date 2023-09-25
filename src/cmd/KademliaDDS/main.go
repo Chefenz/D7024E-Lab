@@ -9,20 +9,23 @@ func main() {
 	containerName := os.Getenv("CONTAINER_NAME")
 
 	var kademliaNode labCode.Kademlia
+	var CLINetworkChan *chan string
 	if containerName == "master" {
-		kademliaNode = labCode.NewMasterKademliaNode()
-		go kademliaNode.Network.Listen("master", 8051, *kademliaNode.StopChan)
-		go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
-		go kademliaNode.RoutingTable.FindClosestContactsRoutine(*kademliaNode.StopChan)
-		go kademliaNode.LookupContactRoutine(*kademliaNode.StopChan)
+		kademliaNode, CLINetworkChan = labCode.NewMasterKademliaNode()
+		go kademliaNode.Network.Listen("master", 8051)
+		go kademliaNode.RoutingTable.UpdateBucketRoutine()
+		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
+		go kademliaNode.LookupContactRoutine()
 
-		go kademliaNode.HeartbeatSignal(*kademliaNode.StopChan)
+		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.LookupCloseContactsToValueRoutine()
+		go kademliaNode.DataStorageManager()
 
 	} else {
 		nodeAddress := os.Getenv("HOSTNAME")
-		kademliaNode = labCode.NewKademliaNode(nodeAddress + ":8051")
+		kademliaNode, CLINetworkChan = labCode.NewKademliaNode(nodeAddress + ":8051")
 
-		masterNodeId := labCode.NewKademliaID("masterNode")
+		masterNodeId := labCode.NewMasterKademliaID()
 		masterNodeAddress := "master:8051"
 		masterContact := labCode.NewContact(masterNodeId, masterNodeAddress)
 
@@ -35,10 +38,13 @@ func main() {
 
 		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
 
-		go kademliaNode.HeartbeatSignal(*kademliaNode.StopChan)
+		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.LookupCloseContactsToValueRoutine()
+		go kademliaNode.DataStorageManager()
 
 	}
 
-	labCode.RunCLI(kademliaNode)
+	CLI := labCode.NewCli(kademliaNode, CLINetworkChan)
+	CLI.RunCLI()
 
 }
