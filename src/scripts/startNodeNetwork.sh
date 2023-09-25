@@ -9,7 +9,7 @@ echo ""
 
 #Remove any running containers
 echo "Remove any running containers"
-sudo docker-compose down
+sudo COMPOSE_HTTP_TIMEOUT=2500 docker-compose down
 echo ""
 
 #Build the docker image and give it the correct name
