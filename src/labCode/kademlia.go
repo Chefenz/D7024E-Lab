@@ -120,7 +120,7 @@ func (kademlia *Kademlia) HeartbeatSignal(stopChan <-chan string) {
 		select {
 		case <-heartbeat:
 			fmt.Println("Heartbeat")
-			kademlia.SendHeartbeatMessage()
+			kademlia.SendHeartbeatMessages()
 		case <-stopChan:
 
 		default:
