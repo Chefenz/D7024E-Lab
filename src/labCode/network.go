@@ -115,10 +115,10 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		*network.DataReadChan <- requestRead
 
 		result := <-requestRead.Resp
-		fmt.Println("The Result of the read operation in network:", result)
+		//fmt.Println("The Result of the read operation in network:", result)
 
 		if result != nil {
-			returnFindValueDataPayload := ReturnFindValueDataPayload{Data: string(result), Shortlist: nil, TargetKey: nil}
+			returnFindValueDataPayload := ReturnFindValuePayload{Data: string(result), Shortlist: nil, TargetKey: nil}
 			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValueDataPayload}
 			network.sendMessage(&transmitObj, &sentFrom)
 
@@ -128,14 +128,14 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 			*network.FindConValueChan <- requestFindClosesTContactOp
 			closestContacts := <-requestFindClosesTContactOp.Resp
 
-			returnFindValueDataPayload := ReturnFindValueDataPayload{Data: "", Shortlist: closestContacts, TargetKey: key}
-			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValueDataPayload}
+			returnFindValuePayload := ReturnFindValuePayload{Data: "", Shortlist: closestContacts, TargetKey: key}
+			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValuePayload}
 			network.sendMessage(&transmitObj, &sentFrom)
 
 		}
 
-	case "RETURN_FIND_VALUE_DATA":
-		returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValueDataPayload").(*ReturnFindValueDataPayload)
+	case "RETURN_FIND_VALUE":
+		returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValueDataPayload").(*ReturnFindValuePayload)
 
 		targetID := returnFindValueDataPayload.TargetKey
 		dataResult := returnFindValueDataPayload.Data
@@ -188,14 +188,13 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 		returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
 
 		key := returnStorePayload.Key
+
 		select {
 		case *network.CLIChan <- key.String():
 			fmt.Println("I WROTE")
 		default:
-			fmt.Println("I skipped")
-
+			fmt.Println("Someone already wrote the answer so I skipped")
 		}
-
 	}
 }
 
@@ -243,11 +242,11 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 		chk(err)
 		return findValuePayload
 
-	case "ReturnFindValueDataPayload":
-		var returnFindValueDataPayload *ReturnFindValueDataPayload
-		err := mapstructure.Decode(objMap, &returnFindValueDataPayload)
+	case "ReturnFindValuePayload":
+		var returnFindValuePayload *ReturnFindValuePayload
+		err := mapstructure.Decode(objMap, &returnFindValuePayload)
 		chk(err)
-		return returnFindValueDataPayload
+		return returnFindValuePayload
 	}
 
 	return nil
