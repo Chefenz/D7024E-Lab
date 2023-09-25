@@ -119,7 +119,7 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 
 		if result != nil {
 			returnFindValueDataPayload := ReturnFindValuePayload{Data: string(result), Shortlist: nil, TargetKey: nil}
-			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValueDataPayload}
+			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE", Sender: network.Me, Data: returnFindValueDataPayload}
 			network.sendMessage(&transmitObj, &sentFrom)
 
 		} else {
@@ -129,13 +129,13 @@ func (network *Network) handleRPC(data []byte, conn *net.UDPConn) {
 			closestContacts := <-requestFindClosesTContactOp.Resp
 
 			returnFindValuePayload := ReturnFindValuePayload{Data: "", Shortlist: closestContacts, TargetKey: key}
-			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE_DATA", Sender: network.Me, Data: returnFindValuePayload}
+			transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE", Sender: network.Me, Data: returnFindValuePayload}
 			network.sendMessage(&transmitObj, &sentFrom)
 
 		}
 
 	case "RETURN_FIND_VALUE":
-		returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValueDataPayload").(*ReturnFindValuePayload)
+		returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValuePayload").(*ReturnFindValuePayload)
 
 		targetID := returnFindValueDataPayload.TargetKey
 		dataResult := returnFindValueDataPayload.Data
