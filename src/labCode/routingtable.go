@@ -90,7 +90,7 @@ func (routingTable *RoutingTable) UpdateBucketRoutine(stopChan <-chan string) {
 
 			routingTable.AddContact(contact)
 
-			fmt.Println("Sender contact has been updated in bucket")
+			//fmt.Println("Sender contact has been updated in bucket")
 			*routingTable.BucketWaitChan <- true
 		}
 	}

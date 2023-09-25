@@ -181,7 +181,7 @@ func (kademlia *Kademlia) SendHeartbeatMessages() {
 	for i := 0; i < len(kademlia.RoutingTable.buckets); i++ {
 		bucket := kademlia.RoutingTable.buckets[i]
 		if bucket.list.Len() > 0 {
-			fmt.Println("Size of bucket ", i, ": ", bucket.list.Len())
+			//fmt.Println("Size of bucket ", i, ": ", bucket.list.Len())
 		}
 		for j := 0; j < bucket.list.Len(); j++ {
 			contacts := bucket.GetContactAndCalcDistance(kademlia.RoutingTable.Me.ID)
@@ -199,7 +199,7 @@ func (kademlia *Kademlia) HeartbeatSignal(stopChan <-chan string) {
 	// Start a goroutine to send heartbeat signals at a regular interval.
 	go func() {
 		for {
-			time.Sleep(time.Second * 30)
+			time.Sleep(time.Second * 60)
 			heartbeat <- true
 		}
 	}()
