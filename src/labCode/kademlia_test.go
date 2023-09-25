@@ -2,6 +2,7 @@ package labCode
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,11 +16,16 @@ func TestNewKademliaNode(t *testing.T) {
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
 	stopChan := make(chan string)
+	dataReadChan := make(chan ReadOperation)
+	dataWriteChan := make(chan WriteOperation)
+	CLIChan := make(chan string)
+	findContCloseToValChan := make(chan FindContCloseToValOp)
+	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	routingTable := NewRoutingTable(NewContact(id, ":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
-	kademliaNode := Kademlia{RoutingTable: routingTable, Network: network, data: make(map[KademliaID][]byte), StopChan: &stopChan}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
+	kademliaNode := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan}
 
-	kademliaNode2 := NewKademliaNode(":8051")
+	kademliaNode2, _ := NewKademliaNode(":8051")
 
 	asserts := assert.New(t)
 
@@ -36,11 +42,16 @@ func TestNewMasterKademliaNode(t *testing.T) {
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
 	stopChan := make(chan string)
+	dataReadChan := make(chan ReadOperation)
+	dataWriteChan := make(chan WriteOperation)
+	CLIChan := make(chan string)
+	findContCloseToValChan := make(chan FindContCloseToValOp)
+	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
-	kademliaNode := Kademlia{RoutingTable: routingTable, Network: network, data: make(map[KademliaID][]byte), StopChan: &stopChan}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
+	kademliaNode := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan}
 
-	kademliaNode2 := NewMasterKademliaNode()
+	kademliaNode2, _ := NewMasterKademliaNode()
 
 	asserts := assert.New(t)
 
@@ -53,8 +64,8 @@ func TestPing(t *testing.T) {
 
 	listenContact := NewContact(NewRandomKademliaID(), ":8053")
 
-	masterNode := NewMasterKademliaNode()
-	otherNode := NewKademliaNode("other")
+	masterNode, _ := NewMasterKademliaNode()
+	otherNode, _ := NewKademliaNode("other")
 
 	asserts := assert.New(t)
 
@@ -69,8 +80,8 @@ func TestLookupContact(t *testing.T) {
 
 	targetContact := NewContact(NewRandomKademliaID(), ":8055")
 
-	masterNode := NewMasterKademliaNode()
-	otherNode := NewKademliaNode("other")
+	masterNode, _ := NewMasterKademliaNode()
+	otherNode, _ := NewKademliaNode("other")
 
 	asserts := assert.New(t)
 
@@ -83,8 +94,8 @@ func TestLookupContact(t *testing.T) {
 
 func TestLookupData(t *testing.T) {
 
-	masterNode := NewMasterKademliaNode()
-	otherNode := NewKademliaNode("other")
+	masterNode, _ := NewMasterKademliaNode()
+	otherNode, _ := NewKademliaNode("other")
 
 	asserts := assert.New(t)
 
@@ -98,8 +109,8 @@ func TestLookupData(t *testing.T) {
 
 func TestStore(t *testing.T) {
 
-	masterNode := NewMasterKademliaNode()
-	otherNode := NewKademliaNode("other")
+	masterNode, _ := NewMasterKademliaNode()
+	otherNode, _ := NewKademliaNode("other")
 
 	asserts := assert.New(t)
 
@@ -114,8 +125,8 @@ func TestStore(t *testing.T) {
 
 func TestHeartbeat(t *testing.T) {
 
-	masterNode := NewMasterKademliaNode()
-	otherNode := NewKademliaNode("other")
+	masterNode, _ := NewMasterKademliaNode()
+	otherNode, _ := NewKademliaNode("other")
 
 	asserts := assert.New(t)
 

@@ -12,12 +12,12 @@ func main() {
 	var CLINetworkChan *chan string
 	if containerName == "master" {
 		kademliaNode, CLINetworkChan = labCode.NewMasterKademliaNode()
-		go kademliaNode.Network.Listen("master", 8051)
-		go kademliaNode.RoutingTable.UpdateBucketRoutine()
-		go kademliaNode.RoutingTable.FindClosestContactsRoutine()
-		go kademliaNode.LookupContactRoutine()
+		go kademliaNode.Network.Listen("master", 8051, *kademliaNode.StopChan)
+		go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
+		go kademliaNode.RoutingTable.FindClosestContactsRoutine(*kademliaNode.StopChan)
+		go kademliaNode.LookupContactRoutine(*kademliaNode.StopChan)
 
-		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.HeartbeatSignal(*kademliaNode.StopChan)
 		go kademliaNode.LookupCloseContactsToValueRoutine()
 		go kademliaNode.DataStorageManager()
 
@@ -38,7 +38,7 @@ func main() {
 
 		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
 
-		go kademliaNode.HeartbeatSignal()
+		go kademliaNode.HeartbeatSignal(*kademliaNode.StopChan)
 		go kademliaNode.LookupCloseContactsToValueRoutine()
 		go kademliaNode.DataStorageManager()
 

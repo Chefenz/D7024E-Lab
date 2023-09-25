@@ -112,20 +112,9 @@ func (network *Network) handleRPC(data []byte) {
 			*network.LookupChan <- returnFindContactPayload.Target
 		}
 
-<<<<<<< HEAD
-	case "FIND_DATA":
-		fmt.Println("This should handle finddata")
-	case "STORE":
-		fmt.Println("This should handle store")
-	default:
-		fmt.Println("in default")
-		return
-	}
-=======
 	case "FIND_VALUE":
 		findValuePayload := decodeTransmitObj(transmitObj, "FindValuePayload").(*FindValuePayload)
 		sentFrom := transmitObj.Sender
->>>>>>> origin/feature/PUT-Refactored
 
 		key := findValuePayload.Key
 

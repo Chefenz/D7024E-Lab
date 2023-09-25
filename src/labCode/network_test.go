@@ -13,8 +13,12 @@ func networkSetup() (network Network) {
 	lookupChan := make(chan Contact)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
+	dataReadChan := make(chan ReadOperation)
+	dataWriteChan := make(chan WriteOperation)
+	CLIChan := make(chan string)
+	findContCloseToValChan := make(chan FindContCloseToValOp)
 	routingTable := NewRoutingTable(NewContact(id, "master"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	return NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan)
+	return NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
 }
 
 func TestNewNetwork(t *testing.T) {
@@ -30,7 +34,7 @@ func TestListen(t *testing.T) {
 
 	listenContact := NewContact(NewRandomKademliaID(), ":8051")
 
-	kademliaNode := NewMasterKademliaNode()
+	kademliaNode, _ := NewMasterKademliaNode()
 
 	testData := TransmitObj{Message: "ELSE", Data: "Nothing"}
 
@@ -50,7 +54,7 @@ func TestHandleRPC(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
 	targetContact := NewContact(NewRandomKademliaID(), ":8053")
 
-	kademliaNode := NewMasterKademliaNode()
+	kademliaNode, _ := NewMasterKademliaNode()
 
 	go kademliaNode.Network.Listen("", 8052, *kademliaNode.StopChan)
 	go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)

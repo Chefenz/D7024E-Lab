@@ -104,11 +104,9 @@ func (cli *CLI) handlePutCommand(args []string) (string, error) {
 
 	dataStr := strings.Join(args, " ")
 	dataByte := []byte(dataStr)
-	fmt.Println(dataByte)
-	fmt.Println("Before Store")
 	cli.KademliaNode.Store(dataByte)
+
 	result := <-*cli.CLINetworkChan
-	fmt.Println("After Store")
 
 	if result == "" {
 		return "", errors.New("Could not save")

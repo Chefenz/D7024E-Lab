@@ -17,13 +17,13 @@ func TestAddContact(t *testing.T) {
 	testBucket := newBucket()
 
 	// Add a contact to the bucket
-	contact1 := Contact{ID: NewKademliaID("TEST"), Address: "TEST_ADDRES"}
+	contact1 := Contact{ID: NewKademliaDataID("TEST"), Address: "TEST_ADDRES"}
 	testBucket.AddContact(contact1)
 
 	// Check that the bucket contains the added contact
 	assert.Equal(t, contact1, testBucket.list.Front().Value, "Contact should be at the front of the bucket")
 
-	contact2 := Contact{ID: NewKademliaID("TEST2"), Address: "TEST_ADDRES2"}
+	contact2 := Contact{ID: NewKademliaDataID("TEST2"), Address: "TEST_ADDRES2"}
 	testBucket.AddContact(contact2)
 	assert.Equal(t, contact2, testBucket.list.Front().Value, "Contact should be at the front of the bucket")
 
@@ -59,13 +59,13 @@ func TestGetContactAndCalcDistance(t *testing.T) {
 	testBucket := newBucket()
 
 	// Add some sample contacts to the bucket
-	contact1 := Contact{ID: NewKademliaID("TEST"), Address: "TEST_ADDRES"}
+	contact1 := Contact{ID: NewKademliaDataID("TEST"), Address: "TEST_ADDRES"}
 	testBucket.AddContact(contact1)
-	contact2 := Contact{ID: NewKademliaID("TEST2"), Address: "TEST_ADDRES2"}
+	contact2 := Contact{ID: NewKademliaDataID("TEST2"), Address: "TEST_ADDRES2"}
 	testBucket.AddContact(contact2)
 
 	// Create a target KademliaID
-	target := NewKademliaID("TARGET")
+	target := NewKademliaDataID("TARGET")
 
 	// Call the GetContactAndCalcDistance method
 	contacts := testBucket.GetContactAndCalcDistance(target)
