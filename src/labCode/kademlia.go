@@ -166,6 +166,11 @@ func (kademlia *Kademlia) LookupData(hash string) {
 	for i := 0; i < len(closestContactsToTargetLst); i++ {
 		kademlia.Network.sendMessage(&transmitObj, &closestContactsToTargetLst[i])
 	}
+
+	go func() {
+		time.Sleep(rpcTimeOut)
+		*kademlia.rpcTimeOutChan <- true
+	}()
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
