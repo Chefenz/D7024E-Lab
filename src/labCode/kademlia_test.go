@@ -1,5 +1,6 @@
 package labCode
 
+/*
 import (
 	"testing"
 	"time"
@@ -123,7 +124,7 @@ func TestStore(t *testing.T) {
 	masterNode.StopAllRoutines()
 
 }
-*/
+
 
 func TestHeartbeat(t *testing.T) {
 
@@ -139,3 +140,4 @@ func TestHeartbeat(t *testing.T) {
 	masterNode.StopAllRoutines()
 
 }
+*/

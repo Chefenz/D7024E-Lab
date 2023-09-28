@@ -13,6 +13,8 @@ const (
 
 	dataDecayTime = 2 * time.Minute // How long the data will be stored in the node before it will be regarded as decayed.
 
+	rpcTimeOut = 5 * time.Second // RPC timeout
+
 )
 
 type Kademlia struct {
@@ -24,6 +26,7 @@ type Kademlia struct {
 	FindConValueChan  *chan FindContCloseToValOp //For looking up contacts close to a target value
 	dataManagerTicker *time.Ticker               //Periodically tells the node to check for decayed data
 	StopChan          *chan string
+	rpcTimeOutChan    *chan bool
 }
 
 type DataStorageObject struct {
@@ -98,9 +101,10 @@ func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	stopChan := make(chan string)
+	rpcTimeOutChan := make(chan bool)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan}, &CLIChan
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &rpcTimeOutChan)
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &rpcTimeOutChan}, &CLIChan
 }
 
 func NewMasterKademliaNode() (Kademlia, *chan string) {
@@ -116,9 +120,10 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	stopChan := make(chan string)
+	rpcTimeOutChan := make(chan bool)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan}, &CLIChan
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &rpcTimeOutChan)
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &rpcTimeOutChan}, &CLIChan
 }
 
 func chk(err error) {
@@ -151,6 +156,11 @@ func (kademlia *Kademlia) LookupData(hash string) {
 
 	closestContactsToTargetLst := kademlia.RoutingTable.FindClosestContacts(dataKademliaID, alpha)
 
+	//If there are no cloest contacts to the data. Abort!
+	if len(closestContactsToTargetLst) == 0 {
+		*kademlia.Network.CLIChan <- ""
+	}
+
 	findValuePayload := FindValuePayload{Key: dataKademliaID}
 	transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: kademlia.RoutingTable.Me, Data: findValuePayload}
 	for i := 0; i < len(closestContactsToTargetLst); i++ {
@@ -167,6 +177,7 @@ func (kademlia *Kademlia) Store(data []byte) {
 	storePayload := StorePayload{Key: newDataId, Data: strData}
 	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload}
 
+	//If there are no cloest contacts to the data. Abort!
 	if len(closestContactsLst) == 0 {
 		*kademlia.Network.CLIChan <- ""
 	}
