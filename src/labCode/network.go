@@ -154,8 +154,6 @@ func (network *Network) handleRPC(data []byte) {
 		} else {
 			// Check if dataResult is empty
 			select {
-			case *network.CLIChan <- valueResult + transmitObj.Sender.String():
-				fmt.Println("I did not have the valid result but It had already been posted So I stop", transmitObj.Sender.String())
 			case <-*network.rpcTimeOutChan:
 				fmt.Println("The RPC call timed out")
 				*network.CLIChan <- "Could not find the result"
