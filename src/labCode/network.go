@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -20,10 +21,11 @@ type Network struct {
 	DataWriteChan    *chan WriteOperation //For sending write requests to the data storage
 	CLIChan          *chan string
 	FindConValueChan *chan FindContCloseToValOp
+	FoundTarget      bool
 }
 
-func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string, findContCloseToValOp *chan FindContCloseToValOp) Network {
-	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan, FindConValueChan: findContCloseToValOp}
+func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string, findContCloseToValOp *chan FindContCloseToValOp, FoundTarget bool) Network {
+	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan, FindConValueChan: findContCloseToValOp, FoundTarget: FoundTarget}
 }
 
 func (network *Network) Listen(ip string, port int, stopChan chan string) {
@@ -99,9 +101,9 @@ func (network *Network) handleRPC(data []byte) {
 	case "RETURN_FIND_CONTACT":
 		returnFindContactPayload := decodeTransmitObj(transmitObj, "ReturnFindContactPayload").(*ReturnFindContactPayload)
 
-		foundTarget := network.checkForFindContact(*returnFindContactPayload)
+		network.checkForFindContact(*returnFindContactPayload)
 
-		if foundTarget == false {
+		if network.FoundTarget == false {
 			fmt.Println("Did Not Find The Target Node Will Try Again")
 			*network.LookupChan <- returnFindContactPayload.Target
 		}
@@ -252,11 +254,10 @@ func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 
 }
 
-func (network *Network) checkForFindContact(returnFindContactPayload ReturnFindContactPayload) (foundTarget bool) {
+func (network *Network) checkForFindContact(returnFindContactPayload ReturnFindContactPayload) {
 
 	shortlist := returnFindContactPayload.Shortlist
 	target := returnFindContactPayload.Target
-	foundTarget = false
 
 	for i := 0; i < len(shortlist); i++ {
 		if *shortlist[i].ID != *network.Me.ID {
@@ -266,13 +267,15 @@ func (network *Network) checkForFindContact(returnFindContactPayload ReturnFindC
 		}
 
 		if *shortlist[i].ID == *target.ID {
-			foundTarget = true
+			network.FoundTarget = true
 			fmt.Println("Found The Target Node :)")
+			timer := time.NewTimer(10 * time.Second)
+			go func() {
+				<-timer.C
+				network.FoundTarget = false
+			}()
 		}
 	}
-
-	return foundTarget
-
 }
 
 func (network *Network) sendMessage(transmitObj *TransmitObj, contact *Contact) {
