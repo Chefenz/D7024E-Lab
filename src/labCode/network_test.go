@@ -18,7 +18,7 @@ func networkSetup() (network Network) {
 	CLIChan := make(chan string)
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	routingTable := NewRoutingTable(NewContact(id, "master"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	return NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
+	return NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, false)
 }
 
 func TestNewNetwork(t *testing.T) {
