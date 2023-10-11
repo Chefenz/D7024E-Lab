@@ -101,7 +101,7 @@ func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	stopChan := make(chan string)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, false)
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
 	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan}, &CLIChan
 }
 
@@ -119,7 +119,7 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	stopChan := make(chan string)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, false)
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
 	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan}, &CLIChan
 }
 
