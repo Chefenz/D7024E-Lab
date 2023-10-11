@@ -71,7 +71,7 @@ func (network *Network) handleRPC(data []byte) {
 	err := json.Unmarshal(data, &transmitObj)
 	chk(err)
 
-	//fmt.Println("Handling RPC: ", transmitObj.Message)
+	fmt.Println("Handling RPC: ", transmitObj.Message)
 
 	switch transmitObj.Message {
 	case "PING":
