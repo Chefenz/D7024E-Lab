@@ -22,10 +22,11 @@ type Network struct {
 	CLIChan          *chan string
 	FindConValueChan *chan FindContCloseToValOp
 	FoundTarget      bool
+	FoundValue       bool
 }
 
-func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string, findContCloseToValOp *chan FindContCloseToValOp, FoundTarget bool) Network {
-	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan, FindConValueChan: findContCloseToValOp, FoundTarget: FoundTarget}
+func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan Contact, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string, findContCloseToValOp *chan FindContCloseToValOp) Network {
+	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan, FindConValueChan: findContCloseToValOp, FoundTarget: false, FoundValue: false}
 }
 
 func (network *Network) Listen(ip string, port int, stopChan chan string) {
@@ -70,7 +71,7 @@ func (network *Network) handleRPC(data []byte) {
 	err := json.Unmarshal(data, &transmitObj)
 	chk(err)
 
-	//fmt.Println("Handling RPC: ", transmitObj.Message)
+	fmt.Println("Handling RPC: ", transmitObj.Message)
 
 	switch transmitObj.Message {
 	case "PING":
@@ -140,31 +141,14 @@ func (network *Network) handleRPC(data []byte) {
 	case "RETURN_FIND_VALUE":
 		returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValuePayload").(*ReturnFindValuePayload)
 
-		targetID := returnFindValueDataPayload.TargetKey
-		valueResult := returnFindValueDataPayload.Data
-		shortLst := returnFindValueDataPayload.Shortlist
+		network.checkForFindValue(transmitObj, *returnFindValueDataPayload)
 
-		if valueResult != "" {
-			// Check if dataResult is not empty
-			select {
-			case *network.CLIChan <- valueResult + " " + transmitObj.Sender.String():
-				//fmt.Println("I had the right result so I wrote", transmitObj.Sender.String())
-			default:
-				//fmt.Println("I had the right result but someone already wrote so I skipped", transmitObj.Sender.String())
-			}
-		} else {
-			// Check if dataResult is empty
-			select {
-			case *network.CLIChan <- valueResult + transmitObj.Sender.String():
-				//fmt.Println("I did not have the valid result but It had already been posted So I stop", transmitObj.Sender.String())
-			default:
-				//fmt.Println("I did not have the valid result and it had not been posted so I send out another find value", transmitObj.Sender.String())
-
-				findValuePayload := FindValuePayload{Key: targetID}
-				transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: network.Me, Data: findValuePayload}
-				for i := 0; i < len(shortLst); i++ {
-					network.sendMessage(&transmitObj, &shortLst[i])
-				}
+		if network.FoundValue == false {
+			fmt.Println("Did Not Find The Target Value Will Try Again")
+			findValuePayload := FindValuePayload{Key: returnFindValueDataPayload.TargetKey}
+			transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: network.Me, Data: findValuePayload}
+			for i := 0; i < len(returnFindValueDataPayload.Shortlist); i++ {
+				network.sendMessage(&transmitObj, &returnFindValueDataPayload.Shortlist[i])
 			}
 		}
 
@@ -275,6 +259,21 @@ func (network *Network) checkForFindContact(returnFindContactPayload ReturnFindC
 				network.FoundTarget = false
 			}()
 		}
+	}
+}
+
+func (network *Network) checkForFindValue(transmitObj TransmitObj, returnFindValueDataPayload ReturnFindValuePayload) {
+
+	valueResult := returnFindValueDataPayload.Data
+
+	if valueResult != "" {
+		network.FoundValue = true
+		*network.CLIChan <- valueResult + " " + transmitObj.Sender.String()
+		timer := time.NewTimer(10 * time.Second)
+		go func() {
+			<-timer.C
+			network.FoundValue = false
+		}()
 	}
 }
 
