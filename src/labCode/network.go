@@ -74,6 +74,7 @@ func (network *Network) handleRPC(data []byte) {
 	fmt.Println("Handling RPC: ", transmitObj.Message)
 
 	if time.Since(transmitObj.RPC_created_at) < 4*time.Second {
+		fmt.Println("RPC not timed out with duration: ", time.Since(transmitObj.RPC_created_at))
 
 		switch transmitObj.Message {
 		case "PING":
@@ -184,6 +185,8 @@ func (network *Network) handleRPC(data []byte) {
 				//fmt.Println("Someone already wrote the answer so I skipped")
 			}
 		}
+	} else {
+		fmt.Println("RPC timed out with duration: ", time.Since(transmitObj.RPC_created_at))
 	}
 
 }
