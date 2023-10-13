@@ -151,7 +151,7 @@ func (kademlia *Kademlia) LookupContact(target *Contact, RPC_created_at time.Tim
 
 		var transmitObj TransmitObj
 
-		if RPC_created_at.IsZero() {
+		if !RPC_created_at.IsZero() {
 			transmitObj = TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload, RPC_created_at: RPC_created_at}
 		} else {
 			transmitObj = TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload, RPC_created_at: time.Now()}
