@@ -15,6 +15,7 @@ const (
 
 	dataDecayTime = 2 * time.Minute // How long the data will be stored in the node before it will be regarded as decayed.
 
+	rpcTimeout = 4 * time.Second
 )
 
 type Kademlia struct {

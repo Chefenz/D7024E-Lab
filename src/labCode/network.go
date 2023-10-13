@@ -73,7 +73,7 @@ func (network *Network) handleRPC(data []byte) {
 
 	fmt.Println("Handling RPC: ", transmitObj.Message, "RPC_duration: ", time.Since(transmitObj.RPC_created_at))
 
-	if time.Since(transmitObj.RPC_created_at) < 4*time.Second {
+	if time.Since(transmitObj.RPC_created_at) < rpcTimeout {
 
 		switch transmitObj.Message {
 		case "PING":
