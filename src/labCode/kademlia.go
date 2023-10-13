@@ -34,9 +34,10 @@ type DataStorageObject struct {
 }
 
 type TransmitObj struct {
-	Message string
-	Sender  Contact
-	Data    interface{}
+	Message        string
+	Sender         Contact
+	Data           interface{}
+	RPC_created_at time.Time
 }
 
 type FindContactPayload struct {
@@ -80,6 +81,12 @@ type WriteOperation struct {
 	Resp chan bool
 }
 
+// Data needed to continue finding new nodes
+type LookupContOp struct {
+	Contact        *Contact
+	RPC_created_at time.Time
+}
+
 //Struct for giving a request to look up nodes closest to a target
 
 type FindContCloseToValOp struct {
@@ -91,7 +98,7 @@ func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	id := NewRandomKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
-	lookupChan := make(chan Contact)
+	lookupChan := make(chan LookupContOp)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
 	dataReadChan := make(chan ReadOperation)
@@ -109,7 +116,7 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	id := NewMasterKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
-	lookupChan := make(chan Contact)
+	lookupChan := make(chan LookupContOp)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
 	dataReadChan := make(chan ReadOperation)
@@ -130,18 +137,24 @@ func chk(err error) {
 }
 
 func (kademlia *Kademlia) Ping(contact *Contact) {
-	transmitObj := TransmitObj{Message: "PING", Data: kademlia.RoutingTable.Me}
+	transmitObj := TransmitObj{Message: "PING", Data: kademlia.RoutingTable.Me, RPC_created_at: time.Now()}
 	kademlia.Network.sendMessage(&transmitObj, contact)
 }
 
-func (kademlia *Kademlia) LookupContact(target *Contact) {
+func (kademlia *Kademlia) LookupContact(target *Contact, RPC_created_at time.Time) {
 	shortlist := kademlia.RoutingTable.FindClosestContacts(target.ID, alpha)
 
 	for i := 0; i < len(shortlist); i++ {
 
 		findContactPayload := FindContactPayload{Sender: kademlia.RoutingTable.Me, Target: *target}
 
-		transmitObj := TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload}
+		var transmitObj TransmitObj
+
+		if RPC_created_at.IsZero() {
+			transmitObj = TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload, RPC_created_at: RPC_created_at}
+		} else {
+			transmitObj = TransmitObj{Message: "FIND_CONTACT", Data: findContactPayload, RPC_created_at: time.Now()}
+		}
 
 		kademlia.Network.sendMessage(&transmitObj, &shortlist[i])
 
@@ -154,7 +167,7 @@ func (kademlia *Kademlia) LookupData(hash string) {
 	closestContactsToTargetLst := kademlia.RoutingTable.FindClosestContacts(dataKademliaID, alpha)
 
 	findValuePayload := FindValuePayload{Key: dataKademliaID}
-	transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: kademlia.RoutingTable.Me, Data: findValuePayload}
+	transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: kademlia.RoutingTable.Me, Data: findValuePayload, RPC_created_at: time.Now()}
 	for i := 0; i < len(closestContactsToTargetLst); i++ {
 		kademlia.Network.sendMessage(&transmitObj, &closestContactsToTargetLst[i])
 	}
@@ -167,7 +180,7 @@ func (kademlia *Kademlia) Store(data []byte) {
 	closestContactsLst := kademlia.RoutingTable.FindClosestContacts(newDataId, alpha)
 
 	storePayload := StorePayload{Key: newDataId, Data: strData}
-	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload}
+	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload, RPC_created_at: time.Now()}
 
 	if len(closestContactsLst) == 0 {
 		*kademlia.Network.CLIChan <- ""
@@ -228,9 +241,9 @@ func (kademlia *Kademlia) LookupContactRoutine(stopChan <-chan string) {
 			fmt.Println("Stopping look up contact routine...")
 			return
 		default:
-			target := <-*kademlia.Network.LookupChan
+			lookupContOp := <-*kademlia.Network.LookupChan
 
-			kademlia.LookupContact(&target)
+			kademlia.LookupContact(lookupContOp.Contact, lookupContOp.RPC_created_at)
 		}
 	}
 }

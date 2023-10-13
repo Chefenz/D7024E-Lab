@@ -10,7 +10,7 @@ func networkSetup() (network Network) {
 	id := NewRandomKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
-	lookupChan := make(chan Contact)
+	lookupChan := make(chan LookupContOp)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
 	dataReadChan := make(chan ReadOperation)

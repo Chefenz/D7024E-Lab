@@ -3,6 +3,7 @@ package main
 import (
 	"kademlia-app/labCode"
 	"os"
+	"time"
 )
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 		go kademliaNode.RoutingTable.FindClosestContactsRoutine(*kademliaNode.StopChan)
 		go kademliaNode.LookupContactRoutine(*kademliaNode.StopChan)
 
-		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me)
+		kademliaNode.LookupContact(&kademliaNode.RoutingTable.Me, time.Now())
 
 		go kademliaNode.HeartbeatSignal(*kademliaNode.StopChan)
 		go kademliaNode.LookupCloseContactsToValueRoutine()
