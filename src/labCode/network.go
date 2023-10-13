@@ -71,10 +71,9 @@ func (network *Network) handleRPC(data []byte) {
 	err := json.Unmarshal(data, &transmitObj)
 	chk(err)
 
-	fmt.Println("Handling RPC: ", transmitObj.Message)
+	fmt.Println("Handling RPC: ", transmitObj.Message, "RPC_duration: ", time.Since(transmitObj.RPC_created_at))
 
 	if time.Since(transmitObj.RPC_created_at) < 4*time.Second {
-		fmt.Println("RPC not timed out with duration: ", time.Since(transmitObj.RPC_created_at))
 
 		switch transmitObj.Message {
 		case "PING":
@@ -185,8 +184,6 @@ func (network *Network) handleRPC(data []byte) {
 				//fmt.Println("Someone already wrote the answer so I skipped")
 			}
 		}
-	} else {
-		fmt.Println("RPC timed out with duration: ", time.Since(transmitObj.RPC_created_at))
 	}
 
 }
