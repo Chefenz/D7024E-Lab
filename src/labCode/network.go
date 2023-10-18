@@ -67,8 +67,7 @@ func (network *Network) Listen(ip string, port int, stopChan chan string) {
 func (network *Network) handleRPC(data []byte) {
 
 	// Unmarshal transfer data
-	var transmitObj TransmitObj
-	err := json.Unmarshal(data, &transmitObj)
+	transmitObj, err := network.unmarshalTransmitObj(data)
 	chk(err)
 
 	fmt.Println("Handling RPC: ", transmitObj.Message, "RPC_duration: ", time.Since(transmitObj.RPC_created_at))
@@ -77,115 +76,151 @@ func (network *Network) handleRPC(data []byte) {
 
 		switch transmitObj.Message {
 		case "PING":
-			contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
-			*network.BucketChan <- *contact
-			<-*network.BucketWaitChan
-
-			transmitObj := TransmitObj{Message: "PONG", Data: network.Me, RPC_created_at: transmitObj.RPC_created_at}
-			network.sendMessage(&transmitObj, contact)
+			network.handlePing(transmitObj)
 		case "PONG":
-			contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
-			*network.BucketChan <- *contact
-			<-*network.BucketWaitChan
+			network.handlePong(transmitObj)
 		case "FIND_CONTACT":
-			findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
-			*network.BucketChan <- findContactPayload.Sender
-			<-*network.BucketWaitChan
-
-			// Lookup closest contacts over channels
-			*network.FindChan <- findContactPayload.Target
-			closestContacts := <-*network.ReturnFindChan
-
-			returnFindContactPayload := ReturnFindContactPayload{Shortlist: closestContacts, Target: findContactPayload.Target}
-			transmitObj := TransmitObj{Message: "RETURN_FIND_CONTACT", Data: returnFindContactPayload, RPC_created_at: transmitObj.RPC_created_at}
-
-			network.sendMessage(&transmitObj, &findContactPayload.Sender)
-
+			network.handleFindContact(transmitObj)
 		case "RETURN_FIND_CONTACT":
-			returnFindContactPayload := decodeTransmitObj(transmitObj, "ReturnFindContactPayload").(*ReturnFindContactPayload)
-
-			network.checkForFindContact(*returnFindContactPayload)
-
-			if network.FoundTarget == false {
-				fmt.Println("Did Not Find The Target Node Will Try Again")
-				lookupContOp := LookupContOp{Contact: &returnFindContactPayload.Target, RPC_created_at: transmitObj.RPC_created_at}
-				*network.LookupChan <- lookupContOp
-			}
-
+			network.handleReturnFindContact(transmitObj)
 		case "FIND_VALUE":
-			findValuePayload := decodeTransmitObj(transmitObj, "FindValuePayload").(*FindValuePayload)
-			sentFrom := transmitObj.Sender
-
-			key := findValuePayload.Key
-
-			requestRead := ReadOperation{Key: key.String(), Resp: make(chan []byte)}
-			*network.DataReadChan <- requestRead
-
-			result := <-requestRead.Resp
-			//fmt.Println("The Result of the read operation in network:", result)
-
-			if result != nil {
-				returnFindValueDataPayload := ReturnFindValuePayload{Data: string(result), Shortlist: nil, TargetKey: nil}
-				transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE", Sender: network.Me, Data: returnFindValueDataPayload, RPC_created_at: transmitObj.RPC_created_at}
-				network.sendMessage(&transmitObj, &sentFrom)
-
-			} else {
-				requestFindClosesTContactOp := FindContCloseToValOp{TargetID: key, Resp: make(chan []Contact)}
-
-				*network.FindConValueChan <- requestFindClosesTContactOp
-				closestContacts := <-requestFindClosesTContactOp.Resp
-
-				returnFindValuePayload := ReturnFindValuePayload{Data: "", Shortlist: closestContacts, TargetKey: key}
-				transmitObj := TransmitObj{Message: "RETURN_FIND_VALUE", Sender: network.Me, Data: returnFindValuePayload, RPC_created_at: transmitObj.RPC_created_at}
-				network.sendMessage(&transmitObj, &sentFrom)
-
-			}
-
-		case "RETURN_FIND_VALUE":
-			returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValuePayload").(*ReturnFindValuePayload)
-
-			network.checkForFindValue(transmitObj, *returnFindValueDataPayload)
-
-			if network.FoundValue == false {
-				fmt.Println("Did Not Find The Target Value Will Try Again")
-				findValuePayload := FindValuePayload{Key: returnFindValueDataPayload.TargetKey}
-				transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: network.Me, Data: findValuePayload, RPC_created_at: transmitObj.RPC_created_at}
-				for i := 0; i < len(returnFindValueDataPayload.Shortlist); i++ {
-					network.sendMessage(&transmitObj, &returnFindValueDataPayload.Shortlist[i])
-				}
-			}
-
-		case "STORE":
-			storePayload := decodeTransmitObj(transmitObj, "StorePayload").(*StorePayload)
-			sentFrom := transmitObj.Sender
-
-			key := storePayload.Key
-			dataStr := storePayload.Data
-			data := []byte(dataStr)
-
-			requestWrite := WriteOperation{Key: key.String(), Data: data, Resp: make(chan bool)}
-			*network.DataWriteChan <- requestWrite
-
-			<-requestWrite.Resp
-
-			returnStorePayload := ReturnStorePayload{Key: key}
-			transmitObj := TransmitObj{Message: "RETURN_STORE", Sender: network.Me, Data: returnStorePayload, RPC_created_at: transmitObj.RPC_created_at}
+			transmitObj, sentFrom := network.handleFindValue(transmitObj)
 			network.sendMessage(&transmitObj, &sentFrom)
+		case "RETURN_FIND_VALUE":
+			network.handleReturnFindValue(transmitObj)
+		case "STORE":
+			network.handleStore(transmitObj)
 
 		case "RETURN_STORE":
-			returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
-
-			key := returnStorePayload.Key
-
-			select {
-			case *network.CLIChan <- key.String():
-				//fmt.Println("I WROTE")
-			default:
-				//fmt.Println("Someone already wrote the answer so I skipped")
-			}
+			network.handleReturnStore(transmitObj)
 		}
 	}
 
+}
+
+func (network *Network) unmarshalTransmitObj(data []byte) (TransmitObj, error) {
+	// Unmarshal transfer data
+	var transmitObj TransmitObj
+	err := json.Unmarshal(data, &transmitObj)
+	return transmitObj, err
+
+}
+
+func (network *Network) handlePing(transmitObj TransmitObj) {
+	contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+	*network.BucketChan <- *contact
+	<-*network.BucketWaitChan
+
+	transmitObj = TransmitObj{Message: "PONG", Data: network.Me, RPC_created_at: transmitObj.RPC_created_at}
+	network.sendMessage(&transmitObj, contact)
+}
+
+func (network *Network) handlePong(transmitObj TransmitObj) {
+	contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+	*network.BucketChan <- *contact
+	<-*network.BucketWaitChan
+}
+
+func (network *Network) handleFindContact(transmitObj TransmitObj) {
+	findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
+	*network.BucketChan <- findContactPayload.Sender
+	<-*network.BucketWaitChan
+
+	// Lookup closest contacts over channels
+	*network.FindChan <- findContactPayload.Target
+	closestContacts := <-*network.ReturnFindChan
+
+	returnFindContactPayload := ReturnFindContactPayload{Shortlist: closestContacts, Target: findContactPayload.Target}
+	transmitObj = TransmitObj{Message: "RETURN_FIND_CONTACT", Data: returnFindContactPayload, RPC_created_at: transmitObj.RPC_created_at}
+
+	network.sendMessage(&transmitObj, &findContactPayload.Sender)
+}
+
+func (network *Network) handleReturnFindContact(transmitObj TransmitObj) {
+	returnFindContactPayload := decodeTransmitObj(transmitObj, "ReturnFindContactPayload").(*ReturnFindContactPayload)
+
+	network.checkForFindContact(*returnFindContactPayload)
+
+	if network.FoundTarget == false {
+		fmt.Println("Did Not Find The Target Node Will Try Again")
+		lookupContOp := LookupContOp{Contact: &returnFindContactPayload.Target, RPC_created_at: transmitObj.RPC_created_at}
+		*network.LookupChan <- lookupContOp
+	}
+
+}
+
+func (network *Network) handleFindValue(transmitObj TransmitObj) (TransmitObj, Contact) {
+	findValuePayload := decodeTransmitObj(transmitObj, "FindValuePayload").(*FindValuePayload)
+	sentFrom := transmitObj.Sender
+
+	key := findValuePayload.Key
+
+	requestRead := ReadOperation{Key: key.String(), Resp: make(chan []byte)}
+	*network.DataReadChan <- requestRead
+
+	result := <-requestRead.Resp
+	//fmt.Println("The Result of the read operation in network:", result)
+
+	if result != nil {
+		returnFindValueDataPayload := ReturnFindValuePayload{Data: string(result), Shortlist: nil, TargetKey: nil}
+		return TransmitObj{Message: "RETURN_FIND_VALUE", Sender: network.Me, Data: returnFindValueDataPayload, RPC_created_at: transmitObj.RPC_created_at}, sentFrom
+
+	} else {
+		requestFindClosesTContactOp := FindContCloseToValOp{TargetID: key, Resp: make(chan []Contact)}
+
+		*network.FindConValueChan <- requestFindClosesTContactOp
+		closestContacts := <-requestFindClosesTContactOp.Resp
+
+		returnFindValuePayload := ReturnFindValuePayload{Data: "", Shortlist: closestContacts, TargetKey: key}
+		return TransmitObj{Message: "RETURN_FIND_VALUE", Sender: network.Me, Data: returnFindValuePayload, RPC_created_at: transmitObj.RPC_created_at}, sentFrom
+
+	}
+}
+
+func (network *Network) handleReturnFindValue(transmitObj TransmitObj) {
+	returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValuePayload").(*ReturnFindValuePayload)
+
+	network.checkForFindValue(transmitObj, *returnFindValueDataPayload)
+
+	if network.FoundValue == false {
+		fmt.Println("Did Not Find The Target Value Will Try Again")
+		findValuePayload := FindValuePayload{Key: returnFindValueDataPayload.TargetKey}
+		transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: network.Me, Data: findValuePayload, RPC_created_at: transmitObj.RPC_created_at}
+		for i := 0; i < len(returnFindValueDataPayload.Shortlist); i++ {
+			network.sendMessage(&transmitObj, &returnFindValueDataPayload.Shortlist[i])
+		}
+	}
+}
+
+func (network *Network) handleStore(transmitObj TransmitObj) {
+	storePayload := decodeTransmitObj(transmitObj, "StorePayload").(*StorePayload)
+	sentFrom := transmitObj.Sender
+
+	key := storePayload.Key
+	dataStr := storePayload.Data
+	data := []byte(dataStr)
+
+	requestWrite := WriteOperation{Key: key.String(), Data: data, Resp: make(chan bool)}
+	*network.DataWriteChan <- requestWrite
+
+	<-requestWrite.Resp
+
+	returnStorePayload := ReturnStorePayload{Key: key}
+	transmitObj = TransmitObj{Message: "RETURN_STORE", Sender: network.Me, Data: returnStorePayload, RPC_created_at: transmitObj.RPC_created_at}
+	network.sendMessage(&transmitObj, &sentFrom)
+}
+
+func (network *Network) handleReturnStore(transmitObj TransmitObj) {
+	returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
+
+	key := returnStorePayload.Key
+
+	select {
+	case *network.CLIChan <- key.String():
+		//fmt.Println("I WROTE")
+	default:
+		//fmt.Println("Someone already wrote the answer so I skipped")
+	}
 }
 
 func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
