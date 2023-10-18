@@ -12,7 +12,7 @@ func TestNewKademliaNode(t *testing.T) {
 	id := NewRandomKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
-	lookupChan := make(chan Contact)
+	lookupChan := make(chan LookupContOp)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
 	stopChan := make(chan string)
@@ -38,7 +38,7 @@ func TestNewMasterKademliaNode(t *testing.T) {
 	id := NewKademliaDataID("masterNode")
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
-	lookupChan := make(chan Contact)
+	lookupChan := make(chan LookupContOp)
 	findChan := make(chan Contact)
 	returnFindChan := make(chan []Contact)
 	stopChan := make(chan string)
@@ -87,7 +87,7 @@ func TestLookupContact(t *testing.T) {
 
 	go masterNode.Network.Listen("", 8054, *masterNode.StopChan)
 
-	asserts.NotPanics(func() { otherNode.LookupContact(&targetContact) }, "The code did panic")
+	asserts.NotPanics(func() { otherNode.LookupContact(&targetContact, time.Now()) }, "The code did panic")
 
 	masterNode.StopAllRoutines()
 }
