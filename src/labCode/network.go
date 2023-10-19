@@ -17,8 +17,8 @@ type Network struct {
 	LookupChan       *chan LookupContOp   // For lookup of contact
 	FindChan         *chan Contact        // For find a contact
 	ReturnFindChan   *chan []Contact      // For returning closest contacts to a contact
-	DataReadChan     *chan ReadOperation  //For sending read requests to the data storage
-	DataWriteChan    *chan WriteOperation //For sending write requests to the data storage
+	DataReadChan     *chan ReadOperation  // For sending read requests to the data storage
+	DataWriteChan    *chan WriteOperation // For sending write requests to the data storage
 	CLIChan          *chan string
 	FindConValueChan *chan FindContCloseToValOp
 	FoundTarget      bool

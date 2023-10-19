@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
@@ -17,6 +18,7 @@ const (
 	UseHelpCommandForDetailedUsageMsg = "\nUse help <command> for more information about a command"
 	InvalidArgsForPutCommandMsg       = "Invalid args for <put> command\n"
 	InvalidArgsForGetCommandMsg       = "Invalid args for <get> command\n"
+	NotAValidHashMSG                  = "Argument was not a 160 bit hash\n"
 
 	PutCommandUsageMsg = "Usage: \n\t put [argument] \n\nDescription: \n\t Takes a single argument, " +
 		"the contents of the file you are uploading, and outputs the hash of the object, if it could be uploaded successfully"
@@ -32,10 +34,12 @@ type CLI struct {
 	CLINetworkChan *chan string
 }
 
+// Creates and returns a new CLI struct
 func NewCli(kademliaNode Kademlia, CLIChan *chan string) CLI {
 	return CLI{KademliaNode: kademliaNode, CLINetworkChan: CLIChan}
 }
 
+// Runs the CLI interface
 func (cli *CLI) RunCLI() {
 	reader := bufio.NewReader(os.Stdin)
 
@@ -51,51 +55,62 @@ func (cli *CLI) RunCLI() {
 			continue
 		}
 
-		command, args, err := cli.parseInput(userInput)
+		response, err := cli.handleUserInput(userInput)
 		if err != nil {
-			fmt.Println("Unexpected Error: ", err)
-			os.Exit(1)
+			cli.printToTerminal(err.Error())
+			continue
 		}
-
-		switch command {
-		case "put":
-			response, err := cli.handlePutCommand(args)
-			if err != nil {
-				cli.printToTerminal(err.Error())
-				break
-			}
-			cli.printToTerminal(response)
-		case "get":
-			response, err := cli.handleGetCommand(args)
-			if err != nil {
-				cli.printToTerminal(err.Error())
-				break
-			}
-			cli.printToTerminal(response)
-		case "exit":
+		if response == ShuttingDownNodeMsg {
 			cli.printToTerminal(ShuttingDownNodeMsg)
 			os.Exit(0)
-		case "help":
-			response := cli.handleHelpCommand(args)
-			cli.printToTerminal(response)
-		default:
-			cli.printToTerminal(UnknownCommandMsg + "<" + command + "> " + UseHelpToViewCommandsMsg)
 		}
+
+		cli.printToTerminal(response)
 
 	}
 
 }
 
+// Handles the userInput
+func (cli *CLI) handleUserInput(userInp string) (string, error) {
+	command, args, err := cli.parseInput(userInp)
+	if err != nil {
+		return "", err
+	}
+
+	switch command {
+	case "put":
+		response, err := cli.handlePutCommand(args)
+		return response, err
+	case "get":
+		response, err := cli.handleGetCommand(args)
+		return response, err
+	case "exit":
+		response := ShuttingDownNodeMsg
+		return response, nil
+	case "help":
+		response := cli.handleHelpCommand(args)
+		return response, nil
+	default:
+		response := UnknownCommandMsg + "<" + command + "> " + UseHelpToViewCommandsMsg
+		return response, nil
+
+	}
+}
+
+// Parses the userinput
 func (cli *CLI) parseInput(userInput string) (string, []string, error) {
 	if userInput == "" {
-		return "", nil, errors.New("empty string")
+		return "", nil, errors.New("Error: empty string to parseInput")
 	}
+
 	args := strings.Split(userInput, " ")
 	command := strings.Trim(strings.ToLower(args[0]), "\n")
 
 	return command, args[1:], nil
 }
 
+// Handles the put command by telling the kademlia node to do a store RPC
 func (cli *CLI) handlePutCommand(args []string) (string, error) {
 	if len(args) == 0 {
 		return "", errors.New(InvalidArgsForPutCommandMsg + PutCommandUsageMsg)
@@ -106,31 +121,43 @@ func (cli *CLI) handlePutCommand(args []string) (string, error) {
 	dataByte := []byte(dataStr)
 	cli.KademliaNode.Store(dataByte)
 
-	result := <-*cli.CLINetworkChan
-
-	if result == "" {
-		return "", errors.New("Could not save")
+	result := ""
+	select {
+	case resp := <-*cli.CLINetworkChan:
+		result = "Store successful! Hash: " + resp
+	case <-time.After(rpcTimeout + time.Millisecond*90):
+		result = "Timeout: could not store"
 	}
 
-	return "Store successful! Hash: " + result, nil
+	return result, nil
 
 }
 
+// Handles the get command by telling the kademlia node to do a LookUpData RPC
 func (cli *CLI) handleGetCommand(args []string) (string, error) {
 	if len(args) == 0 || len(args) > 1 {
 		return "", errors.New(InvalidArgsForGetCommandMsg + GetCommandUsageMsg)
-
 	}
 
-	//TODO: VERIFY THAT THE OTHER ARGUMENT IS A HASH
 	dataIDStr := strings.Join(args, " ")
+	if len(dataIDStr) != 40 {
+		return "", errors.New(NotAValidHashMSG)
+	}
+
 	cli.KademliaNode.LookupData(dataIDStr)
 
-	result := <-*cli.CLINetworkChan
+	result := ""
+	select {
+	case resp := <-*cli.CLINetworkChan:
+		result = "The retrived data: " + resp
+	case <-time.After(rpcTimeout + time.Millisecond*90):
+		result = "Timeout: No data received"
+	}
 
-	return "The retrived data: " + result, nil
+	return result, nil
 }
 
+// Handles the help command
 func (cli *CLI) handleHelpCommand(args []string) string {
 	var rtnMsg string
 
@@ -156,6 +183,7 @@ func (cli *CLI) handleHelpCommand(args []string) string {
 	return rtnMsg
 }
 
+// Prints output to the terminal
 func (cli *CLI) printToTerminal(str string) {
 	fmt.Println()
 	fmt.Println(str)

@@ -3,6 +3,7 @@ package labCode
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"time"
 )
 
@@ -27,6 +28,7 @@ type Kademlia struct {
 	FindConValueChan  *chan FindContCloseToValOp //For looking up contacts close to a target value
 	dataManagerTicker *time.Ticker               //Periodically tells the node to check for decayed data
 	StopChan          *chan string
+	dataStorageMux    *sync.Mutex
 }
 
 type DataStorageObject struct {
@@ -70,7 +72,7 @@ type ReturnStorePayload struct {
 	Key *KademliaID
 }
 
-// Structs for read and write operations (move these to an appropriate place later)
+// Structs for read and write operations
 type ReadOperation struct {
 	Key  string
 	Resp chan []byte
@@ -110,7 +112,7 @@ func NewKademliaNode(ip string) (Kademlia, *chan string) {
 	stopChan := make(chan string)
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan}, &CLIChan
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
 }
 
 func NewMasterKademliaNode() (Kademlia, *chan string) {
@@ -128,7 +130,7 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	stopChan := make(chan string)
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan}, &CLIChan
+	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
 }
 
 func chk(err error) {
@@ -182,10 +184,6 @@ func (kademlia *Kademlia) Store(data []byte) {
 
 	storePayload := StorePayload{Key: newDataId, Data: strData}
 	transmitObj := TransmitObj{Message: "STORE", Sender: kademlia.RoutingTable.Me, Data: storePayload, RPC_created_at: time.Now()}
-
-	if len(closestContactsLst) == 0 {
-		*kademlia.Network.CLIChan <- ""
-	}
 
 	for i := 0; i < len(closestContactsLst); i++ {
 		kademlia.Network.sendMessage(&transmitObj, &closestContactsLst[i])
@@ -261,34 +259,37 @@ func (kademlia *Kademlia) LookupCloseContactsToValueRoutine() {
 	}
 }
 
-func (Kademlia *Kademlia) DataStorageManager() {
+func (kademlia *Kademlia) DataStorageManager() {
 	for {
 		select {
-		case read := <-*Kademlia.DataReadChan:
-			dataStorageObject := Kademlia.DataStorage[read.Key]
+		case read := <-*kademlia.DataReadChan:
+			dataStorageObject := kademlia.DataStorage[read.Key]
 			if reflect.TypeOf(dataStorageObject) == nil {
 				read.Resp <- nil
 			} else {
 				read.Resp <- dataStorageObject.Data
 			}
-		case write := <-*Kademlia.DataWriteChan:
+		case write := <-*kademlia.DataWriteChan:
 			key := write.Key
 			data := write.Data
 
 			newDataStorageObject := DataStorageObject{Data: data, Time: time.Now()}
-			Kademlia.DataStorage[key] = newDataStorageObject
+
+			kademlia.dataStorageMux.Lock()
+			kademlia.DataStorage[key] = newDataStorageObject
+			kademlia.dataStorageMux.Unlock()
 
 			write.Resp <- true
-		case <-Kademlia.dataManagerTicker.C:
-			for key, value := range Kademlia.DataStorage {
+		case <-kademlia.dataManagerTicker.C:
+			for key, value := range kademlia.DataStorage {
 				insertedAt := value.Time
 				durationSinceInsert := time.Since(insertedAt)
 
 				//Delete all stored objects that has been stored for more than the set decay time
 				if durationSinceInsert > dataDecayTime {
-					delete(Kademlia.DataStorage, key)
+					delete(kademlia.DataStorage, key)
 					fmt.Println("DATA OBJECT DELETED BECAUSE OF DECAY")
-					fmt.Println("lenght of map after deletion", len(Kademlia.DataStorage))
+					fmt.Println("lenght of map after deletion", len(kademlia.DataStorage))
 
 				}
 
