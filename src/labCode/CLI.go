@@ -14,7 +14,7 @@ const (
 	ShuttingDownNodeMsg               = "Exiting - closing down node"
 	UnknownCommandMsg                 = "Unknown command - "
 	UseHelpToViewCommandsMsg          = "Use command <help> to get a list of available commands"
-	ListAvailableCommandsMsg          = "The available commands are: \n\n\tput\tStore data in the DDS\n\tget\tRetrieve data from the DDS\n\texit\tTerminates the node\n\thelp\tList all available commands\t\n"
+	ListAvailableCommandsMsg          = "The available commands are: \n\n\tput\tStore data in the DDS\n\tget\tRetrieve data from the DDS\n\texit\tTerminates the node\n\thelp\tList all available commands\n\ttogglePrints\tToggles non CLI printouts\n\t"
 	UseHelpCommandForDetailedUsageMsg = "\nUse help <command> for more information about a command"
 	InvalidArgsForPutCommandMsg       = "Invalid args for <put> command\n"
 	InvalidArgsForGetCommandMsg       = "Invalid args for <get> command\n"
@@ -27,6 +27,7 @@ const (
 	ExitCommandUsageMsg = "Usage: \n\t exit \n\nDescription: \n\t Terminates the node"
 	HelpCommandUsageMsg = "Usage \n\t help or help <command> \n\nDescription: \n\t Lists all available commands " +
 		"or more information about a specific command"
+	TogglePrintoutsCommandUsageMsg = "Usage \n\t togglePrintouts \n\nDescription: \n\t Toggles non CLI printouts"
 )
 
 type CLI struct {
@@ -91,6 +92,9 @@ func (cli *CLI) handleUserInput(userInp string) (string, error) {
 	case "help":
 		response := cli.handleHelpCommand(args)
 		return response, nil
+	case "toggleprints":
+		cli.handleToggleHeartbeatCommand(args)
+		return fmt.Sprintln("Has toggled DoNonCLIPrintouts to: ", *cli.KademliaNode.Network.DoNonCLIPrintouts), nil
 	default:
 		response := UnknownCommandMsg + "<" + command + "> " + UseHelpToViewCommandsMsg
 		return response, nil
@@ -179,14 +183,23 @@ func (cli *CLI) handleHelpCommand(args []string) string {
 			rtnMsg = ExitCommandUsageMsg
 		case "help":
 			rtnMsg = HelpCommandUsageMsg
+		case "toggleprints":
+			rtnMsg = TogglePrintoutsCommandUsageMsg
 		default:
 			rtnMsg = ListAvailableCommandsMsg + UseHelpCommandForDetailedUsageMsg
 		}
+
 	} else {
 		rtnMsg = ListAvailableCommandsMsg + UseHelpCommandForDetailedUsageMsg
 	}
 
 	return rtnMsg
+}
+
+// Handles the help command
+func (cli *CLI) handleToggleHeartbeatCommand(args []string) {
+	newBoolValue := !*cli.KademliaNode.Network.DoNonCLIPrintouts
+	*cli.KademliaNode.Network.DoNonCLIPrintouts = newBoolValue
 }
 
 // Prints output to the terminal
