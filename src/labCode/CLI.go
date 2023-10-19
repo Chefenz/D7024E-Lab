@@ -91,6 +91,9 @@ func (cli *CLI) handleUserInput(userInp string) (string, error) {
 	case "help":
 		response := cli.handleHelpCommand(args)
 		return response, nil
+	case "toggleH":
+		cli.handleToggleHeartbeatCommand(args)
+		return fmt.Sprintln("Has toggled DoNonCLIPrintouts to: ", cli.KademliaNode.Network.DoNonCLIPrintouts), nil
 	default:
 		response := UnknownCommandMsg + "<" + command + "> " + UseHelpToViewCommandsMsg
 		return response, nil
@@ -182,6 +185,12 @@ func (cli *CLI) handleHelpCommand(args []string) string {
 	}
 
 	return rtnMsg
+}
+
+// Handles the help command
+func (cli *CLI) handleToggleHeartbeatCommand(args []string) {
+	newBoolValue := !*cli.KademliaNode.Network.DoNonCLIPrintouts
+	cli.KademliaNode.Network.DoNonCLIPrintouts = &newBoolValue
 }
 
 // Prints output to the terminal

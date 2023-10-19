@@ -11,22 +11,23 @@ import (
 )
 
 type Network struct {
-	Me               Contact
-	BucketChan       *chan Contact        // For update bucket
-	BucketWaitChan   *chan bool           // Wait for bucket update completion
-	LookupChan       *chan LookupContOp   // For lookup of contact
-	FindChan         *chan Contact        // For find a contact
-	ReturnFindChan   *chan []Contact      // For returning closest contacts to a contact
-	DataReadChan     *chan ReadOperation  // For sending read requests to the data storage
-	DataWriteChan    *chan WriteOperation // For sending write requests to the data storage
-	CLIChan          *chan string
-	FindConValueChan *chan FindContCloseToValOp
-	FoundTarget      bool
-	FoundValue       bool
+	Me                Contact
+	BucketChan        *chan Contact        // For update bucket
+	BucketWaitChan    *chan bool           // Wait for bucket update completion
+	LookupChan        *chan LookupContOp   // For lookup of contact
+	FindChan          *chan Contact        // For find a contact
+	ReturnFindChan    *chan []Contact      // For returning closest contacts to a contact
+	DataReadChan      *chan ReadOperation  // For sending read requests to the data storage
+	DataWriteChan     *chan WriteOperation // For sending write requests to the data storage
+	CLIChan           *chan string
+	FindConValueChan  *chan FindContCloseToValOp
+	FoundTarget       bool
+	FoundValue        bool
+	DoNonCLIPrintouts *bool // Used to toggle printouts that are in network and kademlia
 }
 
-func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan LookupContOp, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string, findContCloseToValOp *chan FindContCloseToValOp) Network {
-	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan, FindConValueChan: findContCloseToValOp, FoundTarget: false, FoundValue: false}
+func NewNetwork(me Contact, bucketChan *chan Contact, bucketWaitChan *chan bool, lookupChan *chan LookupContOp, findChan *chan Contact, returnFindChan *chan []Contact, dataReadChan *chan ReadOperation, dataWriteChan *chan WriteOperation, CLIChan *chan string, findContCloseToValOp *chan FindContCloseToValOp, doNonCLIPrintouts *bool) Network {
+	return Network{Me: me, BucketChan: bucketChan, BucketWaitChan: bucketWaitChan, LookupChan: lookupChan, FindChan: findChan, ReturnFindChan: returnFindChan, DataReadChan: dataReadChan, DataWriteChan: dataWriteChan, CLIChan: CLIChan, FindConValueChan: findContCloseToValOp, FoundTarget: false, FoundValue: false, DoNonCLIPrintouts: doNonCLIPrintouts}
 }
 
 func (network *Network) Listen(ip string, port int, stopChan chan string) {
@@ -70,7 +71,7 @@ func (network *Network) handleRPC(data []byte) {
 	transmitObj, err := network.unmarshalTransmitObj(data)
 	chk(err)
 
-	fmt.Println("Handling RPC: ", transmitObj.Message, "RPC_duration: ", time.Since(transmitObj.RPC_created_at))
+	network.doPrintln(fmt.Sprintln("Handling RPC: ", transmitObj.Message, "RPC_duration: ", time.Since(transmitObj.RPC_created_at)))
 
 	if time.Since(transmitObj.RPC_created_at) < rpcTimeout {
 
@@ -107,7 +108,7 @@ func (network *Network) unmarshalTransmitObj(data []byte) (TransmitObj, error) {
 }
 
 func (network *Network) handlePing(transmitObj TransmitObj) {
-	contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+	contact := network.decodeTransmitObj(transmitObj, "Contact").(*Contact)
 	*network.BucketChan <- *contact
 	<-*network.BucketWaitChan
 
@@ -116,13 +117,13 @@ func (network *Network) handlePing(transmitObj TransmitObj) {
 }
 
 func (network *Network) handlePong(transmitObj TransmitObj) {
-	contact := decodeTransmitObj(transmitObj, "Contact").(*Contact)
+	contact := network.decodeTransmitObj(transmitObj, "Contact").(*Contact)
 	*network.BucketChan <- *contact
 	<-*network.BucketWaitChan
 }
 
 func (network *Network) handleFindContact(transmitObj TransmitObj) {
-	findContactPayload := decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
+	findContactPayload := network.decodeTransmitObj(transmitObj, "FindContactPayload").(*FindContactPayload)
 	*network.BucketChan <- findContactPayload.Sender
 	<-*network.BucketWaitChan
 
@@ -137,12 +138,12 @@ func (network *Network) handleFindContact(transmitObj TransmitObj) {
 }
 
 func (network *Network) handleReturnFindContact(transmitObj TransmitObj) {
-	returnFindContactPayload := decodeTransmitObj(transmitObj, "ReturnFindContactPayload").(*ReturnFindContactPayload)
+	returnFindContactPayload := network.decodeTransmitObj(transmitObj, "ReturnFindContactPayload").(*ReturnFindContactPayload)
 
 	network.checkForFindContact(*returnFindContactPayload)
 
 	if network.FoundTarget == false {
-		fmt.Println("Did Not Find The Target Node Will Try Again")
+		network.doPrintln("Did Not Find The Target Node Will Try Again")
 		lookupContOp := LookupContOp{Contact: &returnFindContactPayload.Target, RPC_created_at: transmitObj.RPC_created_at}
 		*network.LookupChan <- lookupContOp
 	}
@@ -150,7 +151,7 @@ func (network *Network) handleReturnFindContact(transmitObj TransmitObj) {
 }
 
 func (network *Network) handleFindValue(transmitObj TransmitObj) (TransmitObj, Contact) {
-	findValuePayload := decodeTransmitObj(transmitObj, "FindValuePayload").(*FindValuePayload)
+	findValuePayload := network.decodeTransmitObj(transmitObj, "FindValuePayload").(*FindValuePayload)
 	sentFrom := transmitObj.Sender
 
 	key := findValuePayload.Key
@@ -178,7 +179,7 @@ func (network *Network) handleFindValue(transmitObj TransmitObj) (TransmitObj, C
 }
 
 func (network *Network) handleReturnFindValue(transmitObj TransmitObj) {
-	returnFindValueDataPayload := decodeTransmitObj(transmitObj, "ReturnFindValuePayload").(*ReturnFindValuePayload)
+	returnFindValueDataPayload := network.decodeTransmitObj(transmitObj, "ReturnFindValuePayload").(*ReturnFindValuePayload)
 
 	network.checkForFindValue(transmitObj, *returnFindValueDataPayload)
 
@@ -193,7 +194,7 @@ func (network *Network) handleReturnFindValue(transmitObj TransmitObj) {
 }
 
 func (network *Network) handleStore(transmitObj TransmitObj) {
-	storePayload := decodeTransmitObj(transmitObj, "StorePayload").(*StorePayload)
+	storePayload := network.decodeTransmitObj(transmitObj, "StorePayload").(*StorePayload)
 	sentFrom := transmitObj.Sender
 
 	key := storePayload.Key
@@ -211,7 +212,7 @@ func (network *Network) handleStore(transmitObj TransmitObj) {
 }
 
 func (network *Network) handleReturnStore(transmitObj TransmitObj) {
-	returnStorePayload := decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
+	returnStorePayload := network.decodeTransmitObj(transmitObj, "ReturnStorePayload").(*ReturnStorePayload)
 
 	key := returnStorePayload.Key
 
@@ -223,11 +224,11 @@ func (network *Network) handleReturnStore(transmitObj TransmitObj) {
 	}
 }
 
-func decodeTransmitObj(obj TransmitObj, objType string) interface{} {
+func (network *Network) decodeTransmitObj(obj TransmitObj, objType string) interface{} {
 	objMap, ok := obj.Data.(map[string]interface{})
 
 	if ok != true {
-		fmt.Println("Data is not a Map")
+		network.doPrintln("Data is not a Map")
 	}
 
 	switch objType {
@@ -334,4 +335,10 @@ func (network *Network) sendMessage(transmitObj *TransmitObj, contact *Contact) 
 
 	conn.Close()
 
+}
+
+func (network *Network) doPrintln(printString string) {
+	if *network.DoNonCLIPrintouts {
+		fmt.Println(printString)
+	}
 }

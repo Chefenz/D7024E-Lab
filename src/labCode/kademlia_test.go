@@ -22,9 +22,10 @@ func TestNewKademliaNode(t *testing.T) {
 	CLIChan := make(chan string)
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
+	ToggleNonCLIPrintouts := false
 	routingTable := NewRoutingTable(NewContact(id, ":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	kademliaNode := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &ToggleNonCLIPrintouts)
+	kademliaNode, _ := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
 
 	kademliaNode2, _ := NewKademliaNode(":8051")
 
@@ -48,9 +49,10 @@ func TestNewMasterKademliaNode(t *testing.T) {
 	CLIChan := make(chan string)
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
+	ToggleNonCLIPrintouts := false
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	kademliaNode := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &ToggleNonCLIPrintouts)
+	kademliaNode, _ := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
 
 	kademliaNode2, _ := NewMasterKademliaNode()
 
