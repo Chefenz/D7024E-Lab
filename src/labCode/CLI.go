@@ -105,7 +105,12 @@ func (cli *CLI) parseInput(userInput string) (string, []string, error) {
 	}
 
 	args := strings.Split(userInput, " ")
-	command := strings.Trim(strings.ToLower(args[0]), "\n")
+
+	for i, s := range args {
+		args[i] = strings.Trim(s, "\n")
+	}
+
+	command := strings.ToLower(args[0])
 
 	return command, args[1:], nil
 }
