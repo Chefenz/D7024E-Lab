@@ -146,6 +146,7 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 
 	dataIDStr := strings.Join(args, " ")
 	if len(dataIDStr) != 40 {
+		fmt.Println(len(dataIDStr))
 		return "", errors.New(NotAValidHashMSG)
 	}
 
