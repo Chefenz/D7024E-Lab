@@ -370,3 +370,18 @@ func TestHandleUserInpOtherCommand(t *testing.T) {
 	asserts.Equal(UnknownCommandMsg+"<"+parsedMockeduserInp+"> "+UseHelpToViewCommandsMsg, results)
 
 }
+
+func TestHandleUserInpError(t *testing.T) {
+	asserts := assert.New(t)
+
+	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	CLI := NewCli(testKademliaNode, testClINetworkChan)
+
+	mockedUserInp := ""
+
+	results, err := CLI.handleUserInput(mockedUserInp)
+
+	asserts.Equal("", results)
+	asserts.Equal("Error: empty string to parseInput", err.Error())
+
+}
