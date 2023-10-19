@@ -20,8 +20,9 @@ func networkSetup() (network Network) {
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
 	findContCloseToValChan := make(chan FindContCloseToValOp)
+	ToggleNonCLIPrintouts := false
 	routingTable := NewRoutingTable(NewContact(id, "master"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	return NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
+	return NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &ToggleNonCLIPrintouts)
 }
 
 func TestNewNetwork(t *testing.T) {
@@ -235,7 +236,7 @@ func TestHandleFindValueWithStoreValue(t *testing.T) {
 	chk(err)
 	transmitObject, err = kademliaNode.Network.unmarshalTransmitObj(jsonData)
 	chk(err)
-	returnFindValuePayload := decodeTransmitObj(transmitObject, "ReturnFindValuePayload").(*ReturnFindValuePayload)
+	returnFindValuePayload := kademliaNode.Network.decodeTransmitObj(transmitObject, "ReturnFindValuePayload").(*ReturnFindValuePayload)
 
 	asserts.Equal(len(returnFindValuePayload.Shortlist), 0)
 
