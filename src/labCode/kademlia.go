@@ -97,26 +97,14 @@ type FindContCloseToValOp struct {
 	Resp     chan []Contact
 }
 
-func NewKademliaNode(ip string) (Kademlia, *chan string) {
-	id := NewRandomKademliaID()
-	bucketChan := make(chan Contact, 1)
-	bucketWaitChan := make(chan bool)
-	lookupChan := make(chan LookupContOp)
-	findChan := make(chan Contact)
-	returnFindChan := make(chan []Contact)
-	dataReadChan := make(chan ReadOperation)
-	dataWriteChan := make(chan WriteOperation)
-	CLIChan := make(chan string)
-	findContCloseToValChan := make(chan FindContCloseToValOp)
-	dataManagerTicker := time.NewTicker(chkDataDecayinter)
-	stopChan := make(chan string)
-	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
-}
+func NewKademliaNode(nodeName string, ip string) (Kademlia, *chan string) {
+	var id *KademliaID
+	if nodeName == "master" {
+		id = NewMasterKademliaID()
+	} else {
+		id = NewRandomKademliaID()
+	}
 
-func NewMasterKademliaNode() (Kademlia, *chan string) {
-	id := NewMasterKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
 	lookupChan := make(chan LookupContOp)
@@ -128,7 +116,8 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	stopChan := make(chan string)
-	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
+
+	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
 	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
 }

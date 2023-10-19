@@ -11,7 +11,7 @@ import (
 func TestParseInputCommand(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockUserInp := "userEnteredCommand"
@@ -27,7 +27,7 @@ func TestParseInputCommand(t *testing.T) {
 func TestPareInputEmptyStringErr(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockUserInp := ""
@@ -42,7 +42,7 @@ func TestPareInputEmptyStringErr(t *testing.T) {
 func TestParseInputCommandAndArgs(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockUserInp := "userEnteredCommand userEnteredFlagOne userEnteredFlagTwo"
@@ -58,7 +58,7 @@ func TestParseInputCommandAndArgs(t *testing.T) {
 func TestHandleHelpCommandNoArgs(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	emptyArgsSlice := []string{}
@@ -72,7 +72,7 @@ func TestHandleHelpCommandNoArgs(t *testing.T) {
 func TestHandleHelpCommandPut(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	helpCommandArg := []string{"put"}
@@ -86,7 +86,7 @@ func TestHandleHelpCommandPut(t *testing.T) {
 func TestHandleHelpCommandGet(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	helpCommandArg := []string{"get"}
@@ -100,7 +100,7 @@ func TestHandleHelpCommandGet(t *testing.T) {
 func TestHandleHelpCommandExit(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	helpCommandArg := []string{"exit"}
@@ -114,7 +114,7 @@ func TestHandleHelpCommandExit(t *testing.T) {
 func TestHandleHelpCommandHelp(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	helpCommandArg := []string{"help"}
@@ -128,7 +128,7 @@ func TestHandleHelpCommandHelp(t *testing.T) {
 func TestHandleHelpCommandUnknownCommand(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	helpCommandArg := []string{"unknownCommand"}
@@ -142,7 +142,7 @@ func TestHandleHelpCommandUnknownCommand(t *testing.T) {
 func TestHandleGetCommandNoArgs(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	emptyGetCommandArgs := []string{}
@@ -156,7 +156,7 @@ func TestHandleGetCommandNoArgs(t *testing.T) {
 func TestHandleGetCommandTooManyArgs(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	GetCommandArgs := []string{"argumentOne", "argumentTwo"}
@@ -170,7 +170,7 @@ func TestHandleGetCommandTooManyArgs(t *testing.T) {
 func TestHandleGetCommandInvalidHashInput(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	GetCommandArgs := []string{"sggfyagsajfkasy"}
@@ -185,10 +185,10 @@ func TestHandleGetCommandInvalidHashInput(t *testing.T) {
 func TestHandleGetCommandValueExists(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
-	mockedKademliaNode, _ := NewKademliaNode("")
+	mockedKademliaNode, _ := NewKademliaNode("", "")
 	mockedData := "mockedData"
 	hashOfMockedData := NewKademliaDataID(mockedData)
 
@@ -211,7 +211,7 @@ func waitToFireResultsGet(testClINetworkChan *chan string, kademliaNode Kademlia
 func TestHandleGetCommandValueDoesNotExist(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockedData := "mockedData"
@@ -230,7 +230,7 @@ func TestHandleGetCommandValueDoesNotExist(t *testing.T) {
 func TestHandlePutCommandNoArgs(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	emptyPutCommandArgs := []string{}
@@ -245,7 +245,7 @@ func TestHandlePutCommandNoArgs(t *testing.T) {
 func TestHandlePutCommandValidStore(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockData := "test"
@@ -271,7 +271,7 @@ func waitToFireResultsPut(mockDataHash KademliaID, testCLINetworkChan *chan stri
 func TestHandlePutCommandTimeout(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockData := "test"
@@ -289,7 +289,7 @@ func TestHandlePutCommandTimeout(t *testing.T) {
 func TestHandleUserInpPutCommand(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockData := "test"
@@ -309,10 +309,10 @@ func TestHandleUserInpPutCommand(t *testing.T) {
 func TestHandleUserInpGetCommand(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
-	mockedKademliaNode, _ := NewKademliaNode("")
+	mockedKademliaNode, _ := NewKademliaNode("", "")
 	mockedData := "mockedData"
 	hashOfMockedData := NewKademliaDataID(mockedData)
 
@@ -329,7 +329,7 @@ func TestHandleUserInpGetCommand(t *testing.T) {
 func TestHandleUserInpExitCommand(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockedUserInp := "exit"
@@ -343,7 +343,7 @@ func TestHandleUserInpExitCommand(t *testing.T) {
 func TestHandleUserInpHelpCommand(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockedUserInp := "help"
@@ -358,7 +358,7 @@ func TestHandleUserInpHelpCommand(t *testing.T) {
 func TestHandleUserInpOtherCommand(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockedUserInp := "nonExistingCommand"
@@ -374,7 +374,7 @@ func TestHandleUserInpOtherCommand(t *testing.T) {
 func TestHandleUserInpError(t *testing.T) {
 	asserts := assert.New(t)
 
-	testKademliaNode, testClINetworkChan := NewKademliaNode("")
+	testKademliaNode, testClINetworkChan := NewKademliaNode("", "")
 	CLI := NewCli(testKademliaNode, testClINetworkChan)
 
 	mockedUserInp := ""
