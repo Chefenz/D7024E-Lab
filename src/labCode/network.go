@@ -37,7 +37,7 @@ func (network *Network) Listen(ip string, port int, stopChan chan string) {
 	conn, err := net.ListenUDP("udp", udpAddr)
 	chk(err)
 
-	fmt.Println("Listening to: ", udpAddr)
+	network.doPrintln(fmt.Sprintln("Listening to: ", udpAddr))
 
 	defer conn.Close()
 
@@ -46,13 +46,13 @@ func (network *Network) Listen(ip string, port int, stopChan chan string) {
 	for {
 		select {
 		case <-stopChan:
-			fmt.Println("Stopping listen..")
+			network.doPrintln("Stopping listen..")
 			conn.Close()
 			return
 		default:
 			n, err := conn.Read(buffer)
 			if err != nil {
-				fmt.Println("Error reading from UDP connection:", err)
+				network.doPrintln(fmt.Sprintln("Error reading from UDP connection:", err))
 				continue
 			}
 			if len(buffer) > 0 {
@@ -184,7 +184,7 @@ func (network *Network) handleReturnFindValue(transmitObj TransmitObj) {
 	network.checkForFindValue(transmitObj, *returnFindValueDataPayload)
 
 	if network.FoundValue == false {
-		fmt.Println("Did Not Find The Target Value Will Try Again")
+		network.doPrintln("Did Not Find The Target Value Will Try Again")
 		findValuePayload := FindValuePayload{Key: returnFindValueDataPayload.TargetKey}
 		transmitObj := TransmitObj{Message: "FIND_VALUE", Sender: network.Me, Data: findValuePayload, RPC_created_at: transmitObj.RPC_created_at}
 		for i := 0; i < len(returnFindValueDataPayload.Shortlist); i++ {
@@ -293,7 +293,7 @@ func (network *Network) checkForFindContact(returnFindContactPayload ReturnFindC
 
 		if *shortlist[i].ID == *target.ID {
 			network.FoundTarget = true
-			fmt.Println("Found The Target Node :)")
+			network.doPrintln("Found The Target Node :)")
 			timer := time.NewTimer(10 * time.Second)
 			go func() {
 				<-timer.C
