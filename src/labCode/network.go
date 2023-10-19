@@ -338,7 +338,8 @@ func (network *Network) sendMessage(transmitObj *TransmitObj, contact *Contact) 
 }
 
 func (network *Network) doPrintln(printString string) {
-	if *network.DoNonCLIPrintouts {
+	if *network.DoNonCLIPrintouts == true {
+		fmt.Println(*network.DoNonCLIPrintouts)
 		fmt.Println(printString)
 	}
 }
