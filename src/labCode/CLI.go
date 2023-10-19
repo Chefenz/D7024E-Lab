@@ -194,7 +194,7 @@ func (cli *CLI) handleHelpCommand(args []string) string {
 // Handles the help command
 func (cli *CLI) handleToggleHeartbeatCommand(args []string) {
 	newBoolValue := !*cli.KademliaNode.Network.DoNonCLIPrintouts
-	cli.KademliaNode.Network.DoNonCLIPrintouts = &newBoolValue
+	*cli.KademliaNode.Network.DoNonCLIPrintouts = newBoolValue
 }
 
 // Prints output to the terminal
