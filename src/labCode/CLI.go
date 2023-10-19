@@ -91,7 +91,7 @@ func (cli *CLI) handleUserInput(userInp string) (string, error) {
 	case "help":
 		response := cli.handleHelpCommand(args)
 		return response, nil
-	case "toggleH":
+	case "toggleprints":
 		cli.handleToggleHeartbeatCommand(args)
 		return fmt.Sprintln("Has toggled DoNonCLIPrintouts to: ", cli.KademliaNode.Network.DoNonCLIPrintouts), nil
 	default:
