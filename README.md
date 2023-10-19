@@ -37,4 +37,6 @@ The testing is done via [Testify](https://github.com/stretchr/testify) and to ru
 
 `exit` - Terminates the node
 
+`togglePrints` - Toggles all non CLI interface printouts 
+
 `help` - Provides information about a command
