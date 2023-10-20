@@ -117,7 +117,7 @@ func NewKademliaNode(nodeName string, ip string) (Kademlia, *chan string) {
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	stopChan := make(chan string)
-  DoNonCLIPrintouts := true
+	DoNonCLIPrintouts := true
 
 	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
 	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &DoNonCLIPrintouts)
@@ -157,6 +157,8 @@ func (kademlia *Kademlia) LookupContact(target *Contact, RPC_created_at time.Tim
 
 func (kademlia *Kademlia) LookupData(hash string) {
 	dataKademliaID := NewKademliaID(hash)
+
+	fmt.Println("DataKademliaID: " + dataKademliaID.String())
 
 	closestContactsToTargetLst := kademlia.RoutingTable.FindClosestContacts(dataKademliaID, alpha)
 
