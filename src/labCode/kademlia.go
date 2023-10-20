@@ -158,8 +158,6 @@ func (kademlia *Kademlia) LookupContact(target *Contact, RPC_created_at time.Tim
 func (kademlia *Kademlia) LookupData(hash string) {
 	dataKademliaID := NewKademliaID(hash)
 
-	fmt.Println("DataKademliaID: " + dataKademliaID.String())
-
 	closestContactsToTargetLst := kademlia.RoutingTable.FindClosestContacts(dataKademliaID, alpha)
 
 	findValuePayload := FindValuePayload{Key: dataKademliaID}

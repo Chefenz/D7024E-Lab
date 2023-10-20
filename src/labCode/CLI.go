@@ -158,9 +158,7 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 	shouldBreak := false
 	for {
 		select {
-		case value := <-*cli.CLINetworkChan:
-			continue
-			fmt.Println(value)
+		case _ = <-*cli.CLINetworkChan:
 		default:
 			shouldBreak = true
 			break
@@ -171,8 +169,6 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 		}
 
 	}
-
-	fmt.Println("dataId:" + dataIDStr)
 
 	cli.KademliaNode.LookupData(dataIDStr)
 
