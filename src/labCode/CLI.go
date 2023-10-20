@@ -169,13 +169,12 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 
 	for {
 		select {
-		case value, ok := <-*cli.CLINetworkChan:
-			if !ok {
-				fmt.Println("Channels is empty")
-				break
-			}
+		case value := <-*cli.CLINetworkChan:
 			fmt.Println("Value in channel: " + value)
+		default:
+			break
 		}
+
 	}
 
 	return result, nil
