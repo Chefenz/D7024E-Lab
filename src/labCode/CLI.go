@@ -154,19 +154,6 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 		return "", errors.New(NotAValidHashMSG)
 	}
 
-	fmt.Println("dataId:" + dataIDStr)
-
-	cli.KademliaNode.LookupData(dataIDStr)
-
-	result := ""
-	select {
-	case resp := <-*cli.CLINetworkChan:
-		result = "The retrived data: " + resp
-		fmt.Println("Response: " + resp)
-	case <-time.After(rpcTimeout + time.Millisecond*90):
-		result = "Timeout: No data received"
-	}
-
 	shouldBreak := false
 	for {
 		select {
@@ -181,6 +168,19 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 			break
 		}
 
+	}
+
+	fmt.Println("dataId:" + dataIDStr)
+
+	cli.KademliaNode.LookupData(dataIDStr)
+
+	result := ""
+	select {
+	case resp := <-*cli.CLINetworkChan:
+		result = "The retrived data: " + resp
+		fmt.Println("Response: " + resp)
+	case <-time.After(rpcTimeout + time.Millisecond*90):
+		result = "Timeout: No data received"
 	}
 
 	return result, nil
