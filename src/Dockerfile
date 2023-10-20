@@ -6,4 +6,4 @@ COPY /bin/main ./
 
 RUN chmod +x main
 
-# CMD ["./main"]
+CMD ["./main"]
