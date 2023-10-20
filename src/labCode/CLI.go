@@ -174,7 +174,7 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 		default:
 			break
 		}
-
+		break
 	}
 
 	return result, nil
