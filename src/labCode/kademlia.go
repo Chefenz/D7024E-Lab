@@ -265,9 +265,9 @@ func (kademlia *Kademlia) DataStorageManager() {
 
 			newDataStorageObject := DataStorageObject{Data: data, Time: time.Now()}
 
-			kademlia.dataStorageMux.Lock()
+			//kademlia.dataStorageMux.Lock()
 			kademlia.DataStorage[key] = newDataStorageObject
-			kademlia.dataStorageMux.Unlock()
+			//kademlia.dataStorageMux.Unlock()
 
 			write.Resp <- true
 		case <-kademlia.dataManagerTicker.C:
