@@ -154,6 +154,7 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 		return "", errors.New(NotAValidHashMSG)
 	}
 
+	//Clears the channel if several had the time to write - ugly solution - needs work
 	shouldBreak := false
 	for {
 		select {
