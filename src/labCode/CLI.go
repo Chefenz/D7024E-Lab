@@ -176,7 +176,6 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 	select {
 	case resp := <-*cli.CLINetworkChan:
 		result = "The retrived data: " + resp
-		fmt.Println("Response: " + resp)
 	case <-time.After(rpcTimeout + time.Millisecond*90):
 		result = "Timeout: No data received"
 	}
