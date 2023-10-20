@@ -167,14 +167,20 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 		result = "Timeout: No data received"
 	}
 
+	shouldBreak := false
 	for {
 		select {
 		case value := <-*cli.CLINetworkChan:
 			fmt.Println("Value in channel: " + value)
 		default:
+			shouldBreak = true
 			break
 		}
-		break
+
+		if shouldBreak {
+			break
+		}
+
 	}
 
 	return result, nil
