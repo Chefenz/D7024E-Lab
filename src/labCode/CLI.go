@@ -167,6 +167,17 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 		result = "Timeout: No data received"
 	}
 
+	for {
+		select {
+		case value, ok := <-*cli.CLINetworkChan:
+			if !ok {
+				fmt.Println("Channels is empty")
+				break
+			}
+			fmt.Println("Value in channel: " + value)
+		}
+	}
+
 	return result, nil
 }
 
