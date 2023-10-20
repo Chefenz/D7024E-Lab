@@ -28,7 +28,8 @@ type Kademlia struct {
 	FindConValueChan  *chan FindContCloseToValOp //For looking up contacts close to a target value
 	dataManagerTicker *time.Ticker               //Periodically tells the node to check for decayed data
 	StopChan          *chan string
-	dataStorageMux    *sync.Mutex
+
+	dataStorageMux *sync.Mutex
 }
 
 type DataStorageObject struct {
@@ -97,26 +98,14 @@ type FindContCloseToValOp struct {
 	Resp     chan []Contact
 }
 
-func NewKademliaNode(ip string) (Kademlia, *chan string) {
-	id := NewRandomKademliaID()
-	bucketChan := make(chan Contact, 1)
-	bucketWaitChan := make(chan bool)
-	lookupChan := make(chan LookupContOp)
-	findChan := make(chan Contact)
-	returnFindChan := make(chan []Contact)
-	dataReadChan := make(chan ReadOperation)
-	dataWriteChan := make(chan WriteOperation)
-	CLIChan := make(chan string)
-	findContCloseToValChan := make(chan FindContCloseToValOp)
-	dataManagerTicker := time.NewTicker(chkDataDecayinter)
-	stopChan := make(chan string)
-	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
-}
+func NewKademliaNode(nodeName string, ip string) (Kademlia, *chan string) {
+	var id *KademliaID
+	if nodeName == "master" {
+		id = NewMasterKademliaID()
+	} else {
+		id = NewRandomKademliaID()
+	}
 
-func NewMasterKademliaNode() (Kademlia, *chan string) {
-	id := NewMasterKademliaID()
 	bucketChan := make(chan Contact, 1)
 	bucketWaitChan := make(chan bool)
 	lookupChan := make(chan LookupContOp)
@@ -128,8 +117,10 @@ func NewMasterKademliaNode() (Kademlia, *chan string) {
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
 	stopChan := make(chan string)
-	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
+  DoNonCLIPrintouts := true
+
+	routingTable := NewRoutingTable(NewContact(id, ip), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &DoNonCLIPrintouts)
 	return Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
 }
 
@@ -194,9 +185,6 @@ func (kademlia *Kademlia) Store(data []byte) {
 func (kademlia *Kademlia) SendHeartbeatMessages() {
 	for i := 0; i < len(kademlia.RoutingTable.buckets); i++ {
 		bucket := kademlia.RoutingTable.buckets[i]
-		if bucket.list.Len() > 0 {
-			//fmt.Println("Size of bucket ", i, ": ", bucket.list.Len())
-		}
 		for j := 0; j < bucket.list.Len(); j++ {
 			contacts := bucket.GetContactAndCalcDistance(kademlia.RoutingTable.Me.ID)
 			for k := 0; k < len(contacts); k++ {
@@ -222,7 +210,7 @@ func (kademlia *Kademlia) HeartbeatSignal(stopChan <-chan string) {
 	for {
 		select {
 		case <-heartbeat:
-			fmt.Println("Heartbeat")
+			kademlia.Network.doPrintln("Heartbeat")
 			//fmt.Println("Foundtarget: ", kademlia.Network.FoundTarget)
 			kademlia.SendHeartbeatMessages()
 		case <-stopChan:
@@ -237,7 +225,7 @@ func (kademlia *Kademlia) LookupContactRoutine(stopChan <-chan string) {
 	for {
 		select {
 		case <-stopChan:
-			fmt.Println("Stopping look up contact routine...")
+			kademlia.Network.doPrintln("Stopping look up contact routine...")
 			return
 		default:
 			lookupContOp := <-*kademlia.Network.LookupChan
@@ -288,8 +276,8 @@ func (kademlia *Kademlia) DataStorageManager() {
 				//Delete all stored objects that has been stored for more than the set decay time
 				if durationSinceInsert > dataDecayTime {
 					delete(kademlia.DataStorage, key)
-					fmt.Println("DATA OBJECT DELETED BECAUSE OF DECAY")
-					fmt.Println("lenght of map after deletion", len(kademlia.DataStorage))
+					kademlia.Network.doPrintln("DATA OBJECT DELETED BECAUSE OF DECAY")
+					kademlia.Network.doPrintln(fmt.Sprintln("lenght of map after deletion", len(kademlia.DataStorage)))
 
 				}
 

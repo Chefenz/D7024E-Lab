@@ -22,11 +22,12 @@ func TestNewKademliaNode(t *testing.T) {
 	CLIChan := make(chan string)
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
+	ToggleNonCLIPrintouts := false
 	routingTable := NewRoutingTable(NewContact(id, ":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	kademliaNode := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &ToggleNonCLIPrintouts)
+	kademliaNode, _ := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
 
-	kademliaNode2, _ := NewKademliaNode(":8051")
+	kademliaNode2, _ := NewKademliaNode("other", ":8051")
 
 	asserts := assert.New(t)
 
@@ -48,11 +49,12 @@ func TestNewMasterKademliaNode(t *testing.T) {
 	CLIChan := make(chan string)
 	findContCloseToValChan := make(chan FindContCloseToValOp)
 	dataManagerTicker := time.NewTicker(chkDataDecayinter)
+	ToggleNonCLIPrintouts := false
 	routingTable := NewRoutingTable(NewContact(id, "master"+":8051"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
-	kademliaNode := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}
+	network := NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &ToggleNonCLIPrintouts)
+	kademliaNode, _ := Kademlia{routingTable, network, make(map[string]DataStorageObject), &dataReadChan, &dataWriteChan, &findContCloseToValChan, dataManagerTicker, &stopChan, &sync.Mutex{}}, &CLIChan
 
-	kademliaNode2, _ := NewMasterKademliaNode()
+	kademliaNode2, _ := NewKademliaNode("master", ":8051")
 
 	asserts := assert.New(t)
 
@@ -65,8 +67,8 @@ func TestPing(t *testing.T) {
 
 	listenContact := NewContact(NewRandomKademliaID(), ":8053")
 
-	masterNode, _ := NewMasterKademliaNode()
-	otherNode, _ := NewKademliaNode("other")
+	masterNode, _ := NewKademliaNode("master", ":8051")
+	otherNode, _ := NewKademliaNode("other", ":0851")
 
 	asserts := assert.New(t)
 
@@ -81,8 +83,8 @@ func TestLookupContact(t *testing.T) {
 
 	targetContact := NewContact(NewRandomKademliaID(), ":8055")
 
-	masterNode, _ := NewMasterKademliaNode()
-	otherNode, _ := NewKademliaNode("other")
+	masterNode, _ := NewKademliaNode("master", ":8051")
+	otherNode, _ := NewKademliaNode("other", ":0851")
 
 	asserts := assert.New(t)
 
@@ -128,8 +130,8 @@ func TestStore(t *testing.T) {
 
 func TestHeartbeat(t *testing.T) {
 
-	masterNode, _ := NewMasterKademliaNode()
-	otherNode, _ := NewKademliaNode("other")
+	masterNode, _ := NewKademliaNode("master", ":8051")
+	otherNode, _ := NewKademliaNode("other", ":0851")
 
 	asserts := assert.New(t)
 

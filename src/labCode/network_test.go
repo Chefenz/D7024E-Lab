@@ -20,8 +20,9 @@ func networkSetup() (network Network) {
 	dataWriteChan := make(chan WriteOperation)
 	CLIChan := make(chan string)
 	findContCloseToValChan := make(chan FindContCloseToValOp)
+	ToggleNonCLIPrintouts := false
 	routingTable := NewRoutingTable(NewContact(id, "master"), &bucketChan, &bucketWaitChan, &findChan, &returnFindChan)
-	return NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan)
+	return NewNetwork(routingTable.Me, &bucketChan, &bucketWaitChan, &lookupChan, &findChan, &returnFindChan, &dataReadChan, &dataWriteChan, &CLIChan, &findContCloseToValChan, &ToggleNonCLIPrintouts)
 }
 
 func TestNewNetwork(t *testing.T) {
@@ -37,7 +38,7 @@ func TestListen(t *testing.T) {
 
 	listenContact := NewContact(NewRandomKademliaID(), ":8051")
 
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 
 	testData := TransmitObj{Message: "ELSE", Data: "Nothing"}
 
@@ -52,7 +53,7 @@ func TestListen(t *testing.T) {
 
 func TestHandlePing(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
 
 	testData := TransmitObj{Message: "PING", Data: senderContact, RPC_created_at: time.Now()}
@@ -78,7 +79,7 @@ func TestHandlePing(t *testing.T) {
 
 func TestHandlePong(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
 
 	testData := TransmitObj{Message: "PING", Data: senderContact, RPC_created_at: time.Now()}
@@ -103,7 +104,7 @@ func TestHandlePong(t *testing.T) {
 
 func TestHandleFindContactSameNode(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
 	go kademliaNode.RoutingTable.FindClosestContactsRoutine(*kademliaNode.StopChan)
 	go kademliaNode.LookupContactRoutine(*kademliaNode.StopChan)
@@ -137,7 +138,7 @@ func TestHandleFindContactSameNode(t *testing.T) {
 
 func TestHandleReturnFindContact(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	go kademliaNode.RoutingTable.UpdateBucketRoutine(*kademliaNode.StopChan)
 	go kademliaNode.RoutingTable.FindClosestContactsRoutine(*kademliaNode.StopChan)
 	go kademliaNode.LookupContactRoutine(*kademliaNode.StopChan)
@@ -173,7 +174,7 @@ func TestHandleReturnFindContact(t *testing.T) {
 
 func TestHandleFindValueNoStoreValue(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	go kademliaNode.LookupCloseContactsToValueRoutine()
 	go kademliaNode.DataStorageManager()
 	testData := TransmitObj{
@@ -202,7 +203,7 @@ func TestHandleFindValueNoStoreValue(t *testing.T) {
 
 func TestHandleFindValueWithStoreValue(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	go kademliaNode.LookupCloseContactsToValueRoutine()
 	go kademliaNode.DataStorageManager()
 	testData := TransmitObj{
@@ -235,7 +236,7 @@ func TestHandleFindValueWithStoreValue(t *testing.T) {
 	chk(err)
 	transmitObject, err = kademliaNode.Network.unmarshalTransmitObj(jsonData)
 	chk(err)
-	returnFindValuePayload := decodeTransmitObj(transmitObject, "ReturnFindValuePayload").(*ReturnFindValuePayload)
+	returnFindValuePayload := kademliaNode.Network.decodeTransmitObj(transmitObject, "ReturnFindValuePayload").(*ReturnFindValuePayload)
 
 	asserts.Equal(len(returnFindValuePayload.Shortlist), 0)
 
@@ -244,7 +245,7 @@ func TestHandleFindValueWithStoreValue(t *testing.T) {
 }
 
 func TestHandleReturnValue(t *testing.T) {
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	cliChan := make(chan string)
 	kademliaNode.Network.CLIChan = &cliChan
 	go func() {
@@ -291,7 +292,7 @@ func TestHandleReturnValue(t *testing.T) {
 
 func TestHandleStore(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	go kademliaNode.LookupCloseContactsToValueRoutine()
 	go kademliaNode.DataStorageManager()
 	testData := TransmitObj{
@@ -325,7 +326,7 @@ func TestHandleStore(t *testing.T) {
 
 func TestHandleReturnStore(t *testing.T) {
 	senderContact := NewContact(NewRandomKademliaID(), ":8053")
-	kademliaNode, _ := NewMasterKademliaNode()
+	kademliaNode, _ := NewKademliaNode("master", "master:8051")
 	go kademliaNode.LookupCloseContactsToValueRoutine()
 	go kademliaNode.DataStorageManager()
 	testData := TransmitObj{
