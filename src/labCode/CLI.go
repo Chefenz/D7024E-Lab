@@ -159,7 +159,8 @@ func (cli *CLI) handleGetCommand(args []string) (string, error) {
 	for {
 		select {
 		case value := <-*cli.CLINetworkChan:
-			fmt.Println("Value in channel: " + value)
+			continue
+			fmt.Println(value)
 		default:
 			shouldBreak = true
 			break
